@@ -34,12 +34,36 @@ se hace la solicitud al controlador para ejecutar la
 operación solicitada
 """
 
+
+# ___________________________________________________
+#  Variables
+# ___________________________________________________
+
+
+servicefile = 'bus_routes_14000.csv'
+initialStation = None
+
+# ___________________________________________________
+#  Menu principal
+# ___________________________________________________
+
 def printMenu():
+    print("\n")
+    print("*******************************************")
     print("Bienvenido")
-    print("1- Cargar información en el catálogo")
-    print("2- ")
+    print("1- Inicializar Analizador")
+    print("2- Cargar información de la red de trnsporte aéreo")
+    print("0- Salir")
+    print("*******************************************")
 
 catalog = None
+
+def optionTwo(cont):
+    controller.loadServices(cont, servicefile)
+    numedges = controller.totalConnections(cont)
+    numvertex = controller.totalStops(cont)
+    print('Numero de vertices: ' + str(numvertex))
+    print('Numero de arcos: ' + str(numedges))
 
 """
 Menu principal
@@ -48,11 +72,14 @@ while True:
     printMenu()
     inputs = input('Seleccione una opción para continuar\n')
     if int(inputs[0]) == 1:
-        print("Cargando información de los archivos ....")
+        print("\nInicializando....")
+        # cont es el controlador que se usará de acá en adelante
+        cont = controller.init()
+        
 
     elif int(inputs[0]) == 2:
-        pass
-
+        print("Cargando información de los archivos ....")
+        optionTwo(cont)
     else:
         sys.exit(0)
 sys.exit(0)
