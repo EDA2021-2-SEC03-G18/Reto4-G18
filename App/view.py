@@ -20,12 +20,13 @@
  * along withthis program.  If not, see <http://www.gnu.org/licenses/>.
  """
 
-import config as cf
 import sys
-import controller
+import config as cf
+import threading
+from App import controller
+from DISClib.ADT import stack
 from DISClib.ADT import list as lt
-assert cf
-
+assert cf 
 
 """
 La vista se encarga de la interacción con el usuario
@@ -34,13 +35,14 @@ se hace la solicitud al controlador para ejecutar la
 operación solicitada
 """
 
-
 # ___________________________________________________
 #  Variables
 # ___________________________________________________
 
 
-servicefile = 'bus_routes_14000.csv'
+servicesfile_airports = 'airports_full.csv'
+servicesfile_routes= "routes_full.csv"
+servicesfile_worldcities= "worldcities.csv"
 initialStation = None
 
 # ___________________________________________________
@@ -56,30 +58,37 @@ def printMenu():
     print("0- Salir")
     print("*******************************************")
 
-catalog = None
+
 
 def optionTwo(cont):
-    controller.loadServices(cont, servicefile)
+    print("\nCargando información...")
+    controller.loadServices(cont, servicesfile_airports, servicesfile_routes)
     numedges = controller.totalConnections(cont)
-    numvertex = controller.totalStops(cont)
+    numvertex = controller.totalAirports(cont)
     print('Numero de vertices: ' + str(numvertex))
     print('Numero de arcos: ' + str(numedges))
+    print('El limite de recursion actual: ' + str(sys.getrecursionlimit()))
 
 """
 Menu principal
 """
-while True:
-    printMenu()
-    inputs = input('Seleccione una opción para continuar\n')
-    if int(inputs[0]) == 1:
-        print("\nInicializando....")
-        # cont es el controlador que se usará de acá en adelante
-        cont = controller.init()
-        
+def thread_cycle():
+    while True:
+        printMenu()
+        inputs = input('Seleccione una opción para continuar\n>')
 
-    elif int(inputs[0]) == 2:
-        print("Cargando información de los archivos ....")
-        optionTwo(cont)
-    else:
-        sys.exit(0)
-sys.exit(0)
+        if int(inputs[0]) == 1:
+            print("\nInicializando....")
+            cont = controller.init()
+
+        elif int(inputs[0]) == 2:
+            optionTwo(cont)
+
+        else:
+            sys.exit(0)
+    sys.exit(0)
+if __name__ == "__main__":
+    threading.stack_size(67108864)  # 64MB stack
+    sys.setrecursionlimit(2 ** 20)
+    thread = threading.Thread(target=thread_cycle)
+    thread.start()
