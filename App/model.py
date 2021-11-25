@@ -83,19 +83,11 @@ def newAnalyzer():
 # ==============================
 
 def addStopConnection(analyzer, lastservice, service):
-    """
-    Adiciona las estaciones al grafo como vertices y arcos entre las
-    estaciones adyacentes.
-    Los vertices tienen por nombre el identificador de la estacion
-    seguido de la ruta que sirve.  Por ejemplo:
-    75009-10
-    Si la estacion sirve otra ruta, se tiene: 75009-101
-    """
     try:
         origin = formatVertex(lastservice)
         destination = formatVertex(service)
         cleanServiceDistance(lastservice, service)
-        distance = float(service['Distance']) - float(lastservice['Distance'])
+        distance = float(service['distance_km']) - float(lastservice['distance_km'])
         distance = abs(distance)
         addStop(analyzer, origin)
         addStop(analyzer, destination)

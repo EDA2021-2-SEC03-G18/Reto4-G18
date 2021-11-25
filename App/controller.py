@@ -47,8 +47,7 @@ def init():
 # ___________________________________________________
 
 
-def loadServices(analyzer, servicesfile_airports, servicesfile_routes):
-
+def loadServices(analyzer,  servicesfile_airports, servicesfile_routes):
 
     servicesfile_airports = cf.data_dir + servicesfile_airports
     input_file_airports = csv.DictReader(open(servicesfile_airports, encoding="utf-8"),
@@ -56,20 +55,14 @@ def loadServices(analyzer, servicesfile_airports, servicesfile_routes):
     servicesfile_routes = cf.data_dir + servicesfile_routes
     input_file_routes = csv.DictReader(open(servicesfile_routes, encoding="utf-8"),
                                 delimiter=",")
-
     lastservice = None
-
     for service in input_file_routes:
         if lastservice is not None:
-            sameservice = lastservice['ServiceNo'] == service['ServiceNo']
-            samedirection = lastservice['Direction'] == service['Direction']
-            samebusStop = lastservice['BusStopCode'] == service['BusStopCode']
-
-
-            
-            if sameservice and samedirection and not samebusStop:
+            samedestination= lastservice['Destination'] == service['Destination']
+            samedeparture = lastservice['Departure'] == service['Departure']
+            if samedeparture and not samedestination:
                 model.addStopConnection(analyzer, lastservice, service)
-        lastservice = service
+            lastservice = service
 
     model.addRouteConnections(analyzer)
     return analyzer
