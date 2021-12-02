@@ -40,9 +40,9 @@ operación solicitada
 # ___________________________________________________
 
 
-servicesfile_airports = 'airports_full.csv'
-servicesfile_routes= "routes_full.csv"
-servicesfile_worldcities= "worldcities.csv"
+IRfile_airports = 'airports_full.csv'
+IRfile_routes= "routes_full.csv"
+IRfile_worldcities= "worldcities.csv"
 initialStation = None
 
 # ___________________________________________________
@@ -54,7 +54,7 @@ def printMenu():
     print("*******************************************")
     print("Bienvenido")
     print("1- Inicializar Analizador")
-    print("2- Cargar información de la red de trnsporte aéreo")
+    print("2- Cargar información de la red de transporte aéreo")
     print("0- Salir")
     print("*******************************************")
 
@@ -62,15 +62,19 @@ def printMenu():
 
 def optionTwo(cont):
     print("\nCargando información...")
-    controller.loadServices(cont, servicesfile_airports, servicesfile_routes)
+    controller.loadInternationalRoutes(cont, IRfile_routes, IRfile_airports, IRfile_worldcities)
     numedges = controller.totalConnections(cont)
     numvertex = controller.totalAirports(cont)
-    print('Numero de vertices: ' + str(numvertex))
-    print('Numero de arcos: ' + str(numedges))
-    print('El limite de recursion actual: ' + str(sys.getrecursionlimit()))
+    print('Número de vértices (dígrafo): ' + str(numvertex))
+    print('Número de arcos (dígrafo): ' + str(numedges))
+    numedges_directed = controller.totalConnectionsDirected(cont)
+    numvertex_directed = controller.totalAirportsDirected(cont)
+    print('Número de vértices (grafo-no-dirigido): ' + str(numvertex_directed))
+    print('Número de arcos (grafo-no-dirigido): ' + str(numedges_directed))
+    print('El limite de recursión actual: ' + str(sys.getrecursionlimit()))
 
 """
-Menu principal
+Menú principal
 """
 def thread_cycle():
     while True:
@@ -87,6 +91,7 @@ def thread_cycle():
         else:
             sys.exit(0)
     sys.exit(0)
+
 if __name__ == "__main__":
     threading.stack_size(67108864)  # 64MB stack
     sys.setrecursionlimit(2 ** 20)

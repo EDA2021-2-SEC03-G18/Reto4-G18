@@ -47,24 +47,29 @@ def init():
 # ___________________________________________________
 
 
-def loadServices(analyzer,  servicesfile_airports, servicesfile_routes):
+def loadInternationalRoutes(analyzer, IRfile_routes, IRfile_airports, IRfile_cities):
 
-    servicesfile_airports = cf.data_dir + servicesfile_airports
-    input_file_airports = csv.DictReader(open(servicesfile_airports, encoding="utf-8"),
+    IRfile_routes = cf.data_dir + IRfile_routes
+    input_file_routes = csv.DictReader(open(IRfile_routes, encoding="utf-8"),
                                 delimiter=",")
-    servicesfile_routes = cf.data_dir + servicesfile_routes
-    input_file_routes = csv.DictReader(open(servicesfile_routes, encoding="utf-8"),
+    
+    IRfile_airports = cf.data_dir + IRfile_airports
+    input_file_airports = csv.DictReader(open(IRfile_airports, encoding="utf-8"),
                                 delimiter=",")
-    lastservice = None
-    for service in input_file_routes:
-        if lastservice is not None:
-            samedestination= lastservice['Destination'] == service['Destination']
-            samedeparture = lastservice['Departure'] == service['Departure']
-            if samedeparture and not samedestination:
-                model.addStopConnection(analyzer, lastservice, service)
-            lastservice = service
-
-    model.addRouteConnections(analyzer)
+    
+    IRfile_cities = cf.data_dir + IRfile_cities
+    input_file_cities = csv.DictReader(open(IRfile_cities, encoding="utf-8"),
+                                delimiter=",")
+    
+    for route in input_file_routes:
+        model.addAirportRoute(analyzer,route)
+    
+    for airportinfo in input_file_airports:
+        model.addAirportInfo(analyzer,airportinfo)
+    
+    for cityinfo in input_file_cities:
+        model.addCityInfo(analyzer,cityinfo)
+    
     return analyzer
 
 # ___________________________________________________
@@ -84,3 +89,16 @@ def totalConnections(analyzer):
     Total de enlaces entre los aeropuertos
     """
     return model.totalConnections(analyzer)
+
+def totalAirportsDirected(analyzer):
+    """
+    Total de aeropuertos en el grafo-no-dirigido
+    """
+    return model.totalAirportsDirected(analyzer)
+
+
+def totalConnectionsDirected(analyzer):
+    """
+    Total de enlaces entre los aeropuertos en el grafo-no-dirigido
+    """
+    return model.totalConnectionsDirected(analyzer)

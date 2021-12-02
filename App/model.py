@@ -50,26 +50,42 @@ los mismos.
 
 
 def newAnalyzer():
+    """ Inicializa el analizador
+
+    airports: Tabla de hash para guardar la información de los aeropuertos
+    IATAs: Tabla de hash para guardar los vértices del grafo
+    connections: Grafo para representar los vuelos entre aeropuertos
+    airports_directed: Grafo no dirigido para representar  exclusivamente 
+    los vuelos entre aeropuertos con conexión de ida y vuelta entre sí
+    Almacena la informacion de los componentes conectados
+    paths: Estructura que almancena las rutas de costo mínimo desde un
+            vértice determinado (aeropuerto) a todos los otros vértices del grafo
+    """
     try:
         analyzer = {
                     'airports': None,
+                    'cities': None,
                     'connections': None,
                     'airports_directed': None
                     }
 
         analyzer['airports'] = m.newMap(numelements=93000,
                                      maptype='PROBING',
-                                     comparefunction=compareAirportsIds)
+                                     comparefunction=compareAirports)
+        
+        analyzer['cities'] = m.newMap(numelements=93000,
+                                     maptype='PROBING',
+                                     comparefunction=compareAirports)
 
         analyzer['connections'] = gr.newGraph(datastructure='ADJ_LIST',
                                               directed=True,
                                               size=93000,
-                                              comparefunction=compareAirportsIds)
+                                              comparefunction=compareAirports)
 
-        analyzer['airports_directed'] = gr.newGraph(datastructure='ADJ_LIST',
+        analyzer['airports_directed'] = gr.newGraph(datastructure='ADJ_LIST',       
                                               directed=False,
                                               size=93000,
-                                              comparefunction=compareAirportsIds)
+                                              comparefunction=compareAirports)
 
         return analyzer
     except Exception as exp:
@@ -82,61 +98,106 @@ def newAnalyzer():
 # Funciones de consulta
 # ==============================
 
-def addStopConnection(analyzer, lastservice, service):
+def addAirportRoute(analyzer, route):
     try:
-        origin = formatVertex(lastservice)
-        destination = formatVertex(service)
-        cleanServiceDistance(lastservice, service)
-        distance = float(service['distance_km']) - float(lastservice['distance_km'])
-        distance = abs(distance)
-        addStop(analyzer, origin)
-        addStop(analyzer, destination)
-        addConnection(analyzer, origin, destination, distance)
-        addRouteStop(analyzer, service)
-        addRouteStop(analyzer, lastservice)
+        departure = route['Departure']
+        destination = route['Destination']
+        distance = route['distance_km']
+        addAirport(analyzer, departure)
+        addAirport(analyzer, destination)
+        addRoute(analyzer, departure, destination, distance)
+        addAirportDirectedRoute(analyzer, destination, departure, distance)
         return analyzer
     except Exception as exp:
-        error.reraise(exp, 'model:addStopConnection')
+        error.reraise(exp, 'model:addAirportRoute')
 
+def addAirport(analyzer, IATA):
+    """
+    Adiciona un aeropuerto como un vertice del grafo
+    -- reconocido con su código IATA --
+    """
+    try:
+        if not gr.containsVertex(analyzer['connections'], IATA):
+            gr.insertVertex(analyzer['connections'], IATA)
+    except Exception as exp:
+        error.reraise(exp, 'model:addAirport')
+
+def addAirportDirectedRoute(analyzer, IATA1, IATA2, distance):
+    """
+    Adiciona dos aeropuertos como vértices del grafo no dirigido y genera su respectiva ruta
+    -- reconocido con su código IATA --
+    """
+    try:
+        edge = gr.getEdge(analyzer['connections'], IATA1, IATA2)
+        containsIATA1 = gr.containsVertex(analyzer['airports_directed'], IATA1)
+        containsIATA2 = gr.containsVertex(analyzer['airports_directed'], IATA2)
+        if not(edge is None) and not(containsIATA1) and not(containsIATA2):
+            gr.insertVertex(analyzer['airports_directed'], IATA1)
+            gr.insertVertex(analyzer['airports_directed'], IATA2)
+            gr.addEdge(analyzer['airports_directed'], IATA1, IATA2, distance)
+    except Exception as exp:
+        error.reraise(exp, 'model:addAirportDirectedRoute')
+
+def addRoute(analyzer, departure, destination, distance):
+    """
+    Adiciona un arco entre dos aeropuertos
+    """
+    try:
+        edge = gr.getEdge(analyzer['connections'], departure, destination)
+        if edge is None:
+            gr.addEdge(analyzer['connections'], departure, destination, distance)
+        return analyzer
+    except Exception as exp:
+        error.reraise(exp, 'model:addRoute')
+
+
+def addAirportInfo(analyzer, airportinfo):
+    """
+    Adiciona la información pertinente de un aeropuerto
+    """
+    try:
+        airports = analyzer['airports']
+        IATAcode = airportinfo['IATA']
+        m.put(airports,IATAcode,airportinfo)
+    except Exception as exp:
+        error.reraise(exp, 'model:addAirportInfo')
+
+def addCityInfo(analyzer, cityinfo):
+    """
+    Adiciona la información pertinente de una ciudad
+    """
+    try:
+        cities = analyzer['airports']
+        city = cityinfo['city']
+        m.put(cities,city,cityinfo)
+    except Exception as exp:
+        error.reraise(exp, 'model:addCityInfo')
 
 def totalAirports(analyzer):
     """
-    Retorna el total de vertices del grafo
+    Retorna el total de vertices del dígrafo
     """
     return gr.numVertices(analyzer['connections'])
 
 
 def totalConnections(analyzer):
     """
-    Retorna el total arcos del grafo
+    Retorna el total arcos del dígrafo 
     """
     return gr.numEdges(analyzer['connections'])
 
-
-
-# ==============================
-# Funciones Helper
-# ==============================
-
-def cleanServiceDistance(lastservice, service):
+def totalAirportsDirected(analyzer):
     """
-    En caso de que el archivo tenga un espacio en la
-    distancia, se reemplaza con cero.
+    Retorna el total de vertices del grafo-no-dirigido
     """
-    if service['Distance'] == '':
-        service['Distance'] = 0
-    if lastservice['Distance'] == '':
-        lastservice['Distance'] = 0
+    return gr.numVertices(analyzer['airports_directed'])
 
 
-def formatVertex(service):
+def totalConnectionsDirected(analyzer):
     """
-    Se formatea el nombrer del vertice con el id de la estación
-    seguido de la ruta.
+    Retorna el total arcos del grafo-no-dirigido
     """
-    name = service['BusStopCode'] + '-'
-    name = name + service['ServiceNo']
-    return name
+    return gr.numEdges(analyzer['airports_directed'])
     
 
 # ==============================
@@ -144,12 +205,23 @@ def formatVertex(service):
 # ==============================
 
 
-def compareAirportsIds(stop, keyvaluestop):
+def compareAirports(airport, keyvalueairport):
 
-    stopcode = keyvaluestop['key']
-    if (stop == stopcode):
+    airportcode = keyvalueairport['key']
+    if (airport == airportcode):
         return 0
-    elif (stop > stopcode):
+    elif (airport > airportcode):
+        return 1
+    else:
+        return -1
+
+def compareroutes(route1, route2):
+    """
+    Compara dos rutas
+    """
+    if (route1 == route2):
+        return 0
+    elif (route1 > route2):
         return 1
     else:
         return -1
