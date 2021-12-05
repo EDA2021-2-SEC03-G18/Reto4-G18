@@ -27,6 +27,7 @@ from App import controller
 from DISClib.ADT import stack
 from DISClib.ADT import list as lt
 assert cf 
+from prettytable import PrettyTable
 
 """
 La vista se encarga de la interacción con el usuario
@@ -40,9 +41,9 @@ operación solicitada
 # ___________________________________________________
 
 
-IRfile_airports = 'airports_full.csv'
-IRfile_routes= "routes_full.csv"
-IRfile_worldcities= "worldcities.csv"
+IRfile_airports = 'airports-utf8-10pct.csv'
+IRfile_routes= "routes-utf8-10pct.csv"
+IRfile_worldcities= "worldcities-utf8.csv"
 initialStation = None
 
 # ___________________________________________________
@@ -61,17 +62,37 @@ def printMenu():
 
 
 def optionTwo(cont):
-    print("\nCargando información...")
+    print("\nCargando información...\n")
+    
     controller.loadInternationalRoutes(cont, IRfile_routes, IRfile_airports, IRfile_worldcities)
     numedges = controller.totalConnections(cont)
     numvertex = controller.totalAirports(cont)
-    print('Número de vértices (dígrafo): ' + str(numvertex))
-    print('Número de arcos (dígrafo): ' + str(numedges))
     numedges_directed = controller.totalConnectionsDirected(cont)
     numvertex_directed = controller.totalAirportsDirected(cont)
-    print('Número de vértices (grafo-no-dirigido): ' + str(numvertex_directed))
-    print('Número de arcos (grafo-no-dirigido): ' + str(numedges_directed))
+    citycount,wc_count = controller.totalCities(cont)
+    airportlist,citylist = controller.airportCityInfo(cont)
+    print('-'*80)
+    print('Número de aeropuertos (dígrafo): ' + str(numvertex))
+    print('Número de rutas aéreas (dígrafo): ' + str(numedges-numedges_directed))
+    print('\nNúmero de aeropuertos (grafo-no-dirigido): ' + str(numvertex_directed))
+    print('Número de rutas aéreas (grafo-no-dirigido): ' + str(numedges_directed))
+    print('\nNúmero de ciudades (archivo worldscities.csv): ' + str(wc_count))
+    print('Número de ciudades (relacionadas a rutas áreas): ' + str(citycount))
+    print('\n')
+    imprimir= PrettyTable()
+    imprimir.field_names=['Name', 'City','Country','Latitude','Longitude']
+    for data in airportlist:
+        imprimir.add_row([data['Name'],data['City'],data['Country'],round(float(data['Latitude']),2),round(float(data['Longitude']),2)])
+    print(imprimir)
+    print("\n")
+    imprimir= PrettyTable()
+    imprimir.field_names=['City','Country','Population''Population', 'Latitude','Longitude']
+    for data in citylist:
+        imprimir.add_row([data['city_ascii'],data['country'],data['population'],round(float(data['lat']),2),round(float(data['lng']),2)])
+    print(imprimir)
+    print("\n")
     print('El limite de recursión actual: ' + str(sys.getrecursionlimit()))
+    print('-'*80)
 
 """
 Menú principal
@@ -87,6 +108,7 @@ def thread_cycle():
 
         elif int(inputs[0]) == 2:
             optionTwo(cont)
+            input('Presione "Enter" para continuar.\n')
 
         else:
             sys.exit(0)

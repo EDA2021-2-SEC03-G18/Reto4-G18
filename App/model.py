@@ -131,7 +131,7 @@ def addAirportDirectedRoute(analyzer, IATA1, IATA2, distance):
         edge = gr.getEdge(analyzer['connections'], IATA1, IATA2)
         containsIATA1 = gr.containsVertex(analyzer['airports_directed'], IATA1)
         containsIATA2 = gr.containsVertex(analyzer['airports_directed'], IATA2)
-        if not(edge is None) and not(containsIATA1) and not(containsIATA2):
+        if (edge is not None) and not(containsIATA1) and not(containsIATA2):
             gr.insertVertex(analyzer['airports_directed'], IATA1)
             gr.insertVertex(analyzer['airports_directed'], IATA2)
             gr.addEdge(analyzer['airports_directed'], IATA1, IATA2, distance)
@@ -167,8 +167,8 @@ def addCityInfo(analyzer, cityinfo):
     Adiciona la información pertinente de una ciudad
     """
     try:
-        cities = analyzer['airports']
-        city = cityinfo['city']
+        cities = analyzer['cities']
+        city = cityinfo['city_ascii']
         m.put(cities,city,cityinfo)
     except Exception as exp:
         error.reraise(exp, 'model:addCityInfo')
@@ -198,7 +198,40 @@ def totalConnectionsDirected(analyzer):
     Retorna el total arcos del grafo-no-dirigido
     """
     return gr.numEdges(analyzer['airports_directed'])
+
+def totalCities(analyzer):
+    routes = analyzer['connections']
+    airports = analyzer['airports']
+    cities = []
+    citycount = 0 
+    for IATAcode in lt.iterator(gr.vertices(routes)): 
+        airport_info = m.get(airports,IATAcode)['value']
+        city = airport_info['City']
+        if city not in cities:
+            citycount += 1
+            cities.append(city)
     
+    return citycount, m.size(analyzer['cities'])
+
+def airportCityInfo(analyzer):
+    routes = analyzer['connections']
+    firstIATA = lt.firstElement(gr.vertices(routes))
+    lastIATA = lt.lastElement(gr.vertices(routes))
+    airports = analyzer['airports']
+    cities = analyzer['cities']
+    
+    fa_info = m.get(airports,firstIATA)['value']
+    la_info = m.get(airports,lastIATA)['value']
+    
+    listcities = m.keySet(cities)
+    firstcity = lt.firstElement(listcities)
+    lastcity = lt.lastElement(listcities)
+    print(firstcity)
+    print(lastcity)
+    fc_info = m.get(cities, firstcity)['value']
+    lc_info = m.get(cities, lastcity)['value']
+    return [fa_info, la_info],[fc_info, lc_info]
+
 
 # ==============================
 # Funciones de Comparacion

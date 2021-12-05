@@ -102,3 +102,15 @@ def totalConnectionsDirected(analyzer):
     Total de enlaces entre los aeropuertos en el grafo-no-dirigido
     """
     return model.totalConnectionsDirected(analyzer)
+
+def totalCities(analyzer):
+    """
+    Total de ciudades en el archivo worldcities.csv y en las rutas cargadas
+    """
+    return model.totalCities(analyzer)
+
+def airportCityInfo(analyzer):
+    """
+    Información de las primer@s y últim@s aeropuertos/ciudades cargad@s 
+    """
+    return model.airportCityInfo(analyzer)
