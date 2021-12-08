@@ -61,16 +61,9 @@ def loadInternationalRoutes(analyzer, IRfile_routes, IRfile_airports, IRfile_cit
     input_file_cities = csv.DictReader(open(IRfile_cities, encoding="utf-8"),
                                 delimiter=",")
     
-    for route in input_file_routes:
-        model.addAirportRoute(analyzer,route)
+    answer = model.loadInternationalRoutes(analyzer,input_file_routes,input_file_airports,input_file_cities)
     
-    for airportinfo in input_file_airports:
-        model.addAirportInfo(analyzer,airportinfo)
-    
-    for cityinfo in input_file_cities:
-        model.addCityInfo(analyzer,cityinfo)
-    
-    return analyzer
+    return answer
 
 # ___________________________________________________
 #  Funciones para consultas
@@ -108,9 +101,3 @@ def totalCities(analyzer):
     Total de ciudades en el archivo worldcities.csv y en las rutas cargadas
     """
     return model.totalCities(analyzer)
-
-def airportCityInfo(analyzer):
-    """
-    Información de las primer@s y últim@s aeropuertos/ciudades cargad@s 
-    """
-    return model.airportCityInfo(analyzer)

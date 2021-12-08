@@ -41,8 +41,8 @@ operación solicitada
 # ___________________________________________________
 
 
-IRfile_airports = 'airports-utf8-10pct.csv'
-IRfile_routes= "routes-utf8-10pct.csv"
+IRfile_airports = 'airports-utf8-small.csv'
+IRfile_routes= "routes-utf8-small.csv"
 IRfile_worldcities= "worldcities-utf8.csv"
 initialStation = None
 
@@ -64,28 +64,22 @@ def printMenu():
 def optionTwo(cont):
     print("\nCargando información...\n")
     
-    controller.loadInternationalRoutes(cont, IRfile_routes, IRfile_airports, IRfile_worldcities)
-    numedges = controller.totalConnections(cont)
-    numvertex = controller.totalAirports(cont)
-    numedges_directed = controller.totalConnectionsDirected(cont)
-    numvertex_directed = controller.totalAirportsDirected(cont)
-    citycount,wc_count = controller.totalCities(cont)
-    airportlist,citylist = controller.airportCityInfo(cont)
+    numvertex, numedges, numvertex_directed, numedges_directed, citycount, airports, cities = controller.loadInternationalRoutes(cont, IRfile_routes, IRfile_airports, IRfile_worldcities)
     print('-'*80)
-    print('Número de aeropuertos (dígrafo): ' + str(numvertex))
-    print('Número de rutas aéreas (dígrafo): ' + str(numedges-numedges_directed))
-    print('\nNúmero de aeropuertos (grafo-no-dirigido): ' + str(numvertex_directed))
-    print('Número de rutas aéreas (grafo-no-dirigido): ' + str(numedges_directed))
-    print('\nNúmero de ciudades (archivo worldscities.csv): ' + str(wc_count))
-    print('Número de ciudades (relacionadas a rutas áreas): ' + str(citycount))
-    print('\n')
+    print('Número de aeropuertos - nodos - (dígrafo): ' + str(numvertex))
+    print('Número de rutas aéreas - arcos - (dígrafo): ' + str(numedges))
+    print('\nNúmero de aeropuertos - nodos - (grafo-no-dirigido): ' + str(numvertex_directed))
+    print('Número de rutas aéreas - arcos - (grafo-no-dirigido): ' + str(numedges_directed))
+    print('\nNúmero de ciudades: ' + str(citycount))
     imprimir= PrettyTable()
     imprimir.field_names=['Name', 'City','Country','Latitude','Longitude']
+    airportlist = [lt.firstElement(airports),lt.lastElement(airports)]
     for data in airportlist:
         imprimir.add_row([data['Name'],data['City'],data['Country'],round(float(data['Latitude']),2),round(float(data['Longitude']),2)])
     print(imprimir)
     print("\n")
     imprimir= PrettyTable()
+    citylist = [lt.firstElement(cities),lt.lastElement(cities)]
     imprimir.field_names=['City','Country','Population''Population', 'Latitude','Longitude']
     for data in citylist:
         imprimir.add_row([data['city_ascii'],data['country'],data['population'],round(float(data['lat']),2),round(float(data['lng']),2)])

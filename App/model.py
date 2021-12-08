@@ -97,19 +97,34 @@ def newAnalyzer():
 # ==============================
 # Funciones de consulta
 # ==============================
+def loadInternationalRoutes(analyzer, input_file_routes, input_file_airports, input_file_cities):
+    
+    airports = lt.newList()
+    for airportinfo in input_file_airports:
+        addAirportInfo(analyzer,airportinfo)
+        addAirport(analyzer,airportinfo['IATA'])
+        lt.addLast(airports,airportinfo)
 
-def addAirportRoute(analyzer, route):
+    for route in input_file_routes:
+        addAirportRoute(analyzer,route)
+    
+    cities = lt.newList()
+    for cityinfo in input_file_cities:
+        addCityInfo(analyzer,cityinfo)
+        lt.addLast(cities, cityinfo)
+    
+    return totalAirports(analyzer), totalConnections(analyzer), totalAirportsDirected(analyzer), totalConnectionsDirected(analyzer), totalCities(analyzer), airports, cities
+
+def addAirportInfo(analyzer, airportinfo):
+    """
+    Adiciona la información pertinente de un aeropuerto
+    """
     try:
-        departure = route['Departure']
-        destination = route['Destination']
-        distance = route['distance_km']
-        addAirport(analyzer, departure)
-        addAirport(analyzer, destination)
-        addRoute(analyzer, departure, destination, distance)
-        addAirportDirectedRoute(analyzer, destination, departure, distance)
-        return analyzer
+        airports = analyzer['airports']
+        IATAcode = airportinfo['IATA']
+        m.put(airports,IATAcode,airportinfo)
     except Exception as exp:
-        error.reraise(exp, 'model:addAirportRoute')
+        error.reraise(exp, 'model:addAirportInfo')
 
 def addAirport(analyzer, IATA):
     """
@@ -117,10 +132,21 @@ def addAirport(analyzer, IATA):
     -- reconocido con su código IATA --
     """
     try:
-        if not gr.containsVertex(analyzer['connections'], IATA):
-            gr.insertVertex(analyzer['connections'], IATA)
+        gr.insertVertex(analyzer['connections'], IATA)
+        gr.insertVertex(analyzer['airports_directed'], IATA)
     except Exception as exp:
         error.reraise(exp, 'model:addAirport')
+
+def addAirportRoute(analyzer, route):
+    try:
+        departure = route['Departure']
+        destination = route['Destination']
+        distance = route['distance_km']
+        addRoute(analyzer, departure, destination, distance)
+        addAirportDirectedRoute(analyzer, departure, destination, distance)
+        return analyzer
+    except Exception as exp:
+        error.reraise(exp, 'model:addAirportRoute')
 
 def addAirportDirectedRoute(analyzer, IATA1, IATA2, distance):
     """
@@ -128,12 +154,10 @@ def addAirportDirectedRoute(analyzer, IATA1, IATA2, distance):
     -- reconocido con su código IATA --
     """
     try:
-        edge = gr.getEdge(analyzer['connections'], IATA1, IATA2)
-        containsIATA1 = gr.containsVertex(analyzer['airports_directed'], IATA1)
-        containsIATA2 = gr.containsVertex(analyzer['airports_directed'], IATA2)
-        if (edge is not None) and not(containsIATA1) and not(containsIATA2):
-            gr.insertVertex(analyzer['airports_directed'], IATA1)
-            gr.insertVertex(analyzer['airports_directed'], IATA2)
+        edge1 = gr.getEdge(analyzer['connections'], IATA1, IATA2)
+        edge2 = gr.getEdge(analyzer['connections'], IATA2, IATA1)
+        edge = gr.getEdge(analyzer['airports_directed'], IATA1, IATA2)
+        if (edge1 is not None) and (edge2 is not None) and (edge is None):
             gr.addEdge(analyzer['airports_directed'], IATA1, IATA2, distance)
     except Exception as exp:
         error.reraise(exp, 'model:addAirportDirectedRoute')
@@ -150,25 +174,14 @@ def addRoute(analyzer, departure, destination, distance):
     except Exception as exp:
         error.reraise(exp, 'model:addRoute')
 
-
-def addAirportInfo(analyzer, airportinfo):
-    """
-    Adiciona la información pertinente de un aeropuerto
-    """
-    try:
-        airports = analyzer['airports']
-        IATAcode = airportinfo['IATA']
-        m.put(airports,IATAcode,airportinfo)
-    except Exception as exp:
-        error.reraise(exp, 'model:addAirportInfo')
-
 def addCityInfo(analyzer, cityinfo):
     """
     Adiciona la información pertinente de una ciudad
     """
     try:
         cities = analyzer['cities']
-        city = cityinfo['city_ascii']
+        city = cityinfo['id']
+
         m.put(cities,city,cityinfo)
     except Exception as exp:
         error.reraise(exp, 'model:addCityInfo')
@@ -200,37 +213,7 @@ def totalConnectionsDirected(analyzer):
     return gr.numEdges(analyzer['airports_directed'])
 
 def totalCities(analyzer):
-    routes = analyzer['connections']
-    airports = analyzer['airports']
-    cities = []
-    citycount = 0 
-    for IATAcode in lt.iterator(gr.vertices(routes)): 
-        airport_info = m.get(airports,IATAcode)['value']
-        city = airport_info['City']
-        if city not in cities:
-            citycount += 1
-            cities.append(city)
-    
-    return citycount, m.size(analyzer['cities'])
-
-def airportCityInfo(analyzer):
-    routes = analyzer['connections']
-    firstIATA = lt.firstElement(gr.vertices(routes))
-    lastIATA = lt.lastElement(gr.vertices(routes))
-    airports = analyzer['airports']
-    cities = analyzer['cities']
-    
-    fa_info = m.get(airports,firstIATA)['value']
-    la_info = m.get(airports,lastIATA)['value']
-    
-    listcities = m.keySet(cities)
-    firstcity = lt.firstElement(listcities)
-    lastcity = lt.lastElement(listcities)
-    print(firstcity)
-    print(lastcity)
-    fc_info = m.get(cities, firstcity)['value']
-    lc_info = m.get(cities, lastcity)['value']
-    return [fa_info, la_info],[fc_info, lc_info]
+    return m.size(analyzer['cities'])
 
 
 # ==============================
