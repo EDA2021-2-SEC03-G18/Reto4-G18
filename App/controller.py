@@ -101,3 +101,10 @@ def totalCities(analyzer):
     Total de ciudades en el archivo worldcities.csv y en las rutas cargadas
     """
     return model.totalCities(analyzer)
+
+# ==============================
+# Requerimiento 1
+# ==============================
+
+def top5Interconected(analyzer):
+    return model.top5Interconected(analyzer)

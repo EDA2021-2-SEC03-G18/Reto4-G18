@@ -32,6 +32,7 @@ assert cf
 import config
 from DISClib.ADT.graph import gr
 from DISClib.ADT import map as m
+from DISClib.ADT import orderedmap as om
 from DISClib.ADT import list as lt
 from DISClib.Algorithms.Graphs import scc
 from DISClib.Algorithms.Graphs import dijsktra as djk
@@ -66,6 +67,7 @@ def newAnalyzer():
                     'airports': None,
                     'cities': None,
                     'connections': None,
+                    'connections_free': None,
                     'airports_directed': None
                     }
 
@@ -81,6 +83,12 @@ def newAnalyzer():
                                               directed=True,
                                               size=93000,
                                               comparefunction=compareAirports)
+        
+        analyzer['connections_free'] = gr.newGraph(datastructure='ADJ_LIST',
+                                              directed=True,
+                                              size=93000,
+                                              comparefunction=compareAirports)
+
 
         analyzer['airports_directed'] = gr.newGraph(datastructure='ADJ_LIST',       
                                               directed=False,
@@ -96,6 +104,10 @@ def newAnalyzer():
 
 # ==============================
 # Funciones de consulta
+# ==============================
+
+# ==============================
+# Carga de datos
 # ==============================
 def loadInternationalRoutes(analyzer, input_file_routes, input_file_airports, input_file_cities):
     
@@ -133,6 +145,7 @@ def addAirport(analyzer, IATA):
     """
     try:
         gr.insertVertex(analyzer['connections'], IATA)
+        gr.insertVertex(analyzer['connections_free'], IATA)
         gr.insertVertex(analyzer['airports_directed'], IATA)
     except Exception as exp:
         error.reraise(exp, 'model:addAirport')
@@ -143,6 +156,7 @@ def addAirportRoute(analyzer, route):
         destination = route['Destination']
         distance = route['distance_km']
         addRoute(analyzer, departure, destination, distance)
+        addRouteFree(analyzer, departure, destination, distance)
         addAirportDirectedRoute(analyzer, departure, destination, distance)
         return analyzer
     except Exception as exp:
@@ -170,6 +184,16 @@ def addRoute(analyzer, departure, destination, distance):
         edge = gr.getEdge(analyzer['connections'], departure, destination)
         if edge is None:
             gr.addEdge(analyzer['connections'], departure, destination, distance)
+        return analyzer
+    except Exception as exp:
+        error.reraise(exp, 'model:addRoute')
+
+def addRouteFree(analyzer, departure, destination, distance):
+    """
+    Adiciona un arco entre dos aeropuertos
+    """
+    try:
+        gr.addEdge(analyzer['connections_free'], departure, destination, distance)
         return analyzer
     except Exception as exp:
         error.reraise(exp, 'model:addRoute')
@@ -215,6 +239,47 @@ def totalConnectionsDirected(analyzer):
 def totalCities(analyzer):
     return m.size(analyzer['cities'])
 
+# ==============================
+# Requerimiento 1
+# ==============================
+def top5Interconected(analyzer):
+    digraph = analyzer['connections_free']
+    airport_map = analyzer['airports']
+    airports = gr.vertices(digraph)
+    airports_connections = om.newMap(omaptype='RBT',comparefunction= compareconnections)
+    airport_network = 0
+    for airport in lt.iterator(airports):
+        outbound = gr.outdegree(digraph,airport)
+        inbound = gr.indegree(digraph,airport)
+        connections = outbound+inbound
+        if connections > 0:
+            airport_network += 1
+        airportinfo = m.get(airport_map,airport)['value']
+        airportinfo['outbound'] = outbound
+        airportinfo['inbound'] = inbound
+        if not om.contains(airports_connections,connections):
+            airports_list = lt.newList()
+            lt.addLast(airports_list,airportinfo)
+            om.put(airports_connections,connections,airports_list)
+        else:
+            airports_list = om.get(airports_connections,connections)['value']
+            lt.addLast(airports_list,airportinfo)
+    top5 = lt.newList()
+    maxKey = om.maxKey(airports_connections)
+    airports_max = om.get(airports_connections,maxKey)['value']
+
+    while lt.size(top5)<5:
+        i = 1
+        while lt.size(top5) < 5 and i <= lt.size(airports_max):
+            airportinfo = lt.getElement(airports_max,i)
+            lt.addLast(top5,airportinfo)
+            i += 1
+        
+        om.deleteMax(airports_connections)
+        maxKey = om.floor(airports_connections,maxKey)
+        airports_max = om.get(airports_connections,maxKey)['value']
+    
+    return airport_network, top5
 
 # ==============================
 # Funciones de Comparacion
@@ -241,3 +306,15 @@ def compareroutes(route1, route2):
         return 1
     else:
         return -1
+
+def compareconnections(connections1, connections2):
+    """
+    Compara dos rutas
+    """
+    if (connections1 == connections2):
+        return 0
+    elif (connections1 > connections2):
+        return 1
+    else:
+        return -1
+# %%

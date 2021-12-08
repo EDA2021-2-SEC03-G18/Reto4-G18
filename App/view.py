@@ -56,6 +56,7 @@ def printMenu():
     print("Bienvenido")
     print("1- Inicializar Analizador")
     print("2- Cargar información de la red de transporte aéreo")
+    print("3- Encontrar puntos de interconexión aérea")
     print("0- Salir")
     print("*******************************************")
 
@@ -88,6 +89,24 @@ def optionTwo(cont):
     print('El limite de recursión actual: ' + str(sys.getrecursionlimit()))
     print('-'*80)
 
+def optionThree(cont):
+    print("\nCalculando aeropuertos interconectados...\n")
+
+    airport_network, top5 = controller.top5Interconected(cont)
+    print('-'*80)
+    print('Hay un total de', airport_network,'aeropuertos interconectados.')
+    print('-'*80)
+    print("\n")
+    print('La información de los aeropuertos más interconectados (TOP 5) se presenta a continuación...\n')
+    cont['airports']
+    imprimir= PrettyTable()
+    imprimir.field_names=['Name','City','Country','IATA','Connections', 'Inbound','Outbound']
+    for data in lt.iterator(top5):
+        imprimir.add_row([data['Name'],data['City'],data['Country'],data['IATA'],data['inbound']+data['outbound'],data['inbound'],data['outbound']])
+    print(imprimir)
+    print("\n")
+    
+
 """
 Menú principal
 """
@@ -102,6 +121,10 @@ def thread_cycle():
 
         elif int(inputs[0]) == 2:
             optionTwo(cont)
+            input('Presione "Enter" para continuar.\n')
+        
+        elif int(inputs[0]) == 3:
+            optionThree(cont)
             input('Presione "Enter" para continuar.\n')
 
         else:
