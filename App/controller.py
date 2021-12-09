@@ -108,3 +108,30 @@ def totalCities(analyzer):
 
 def top5Interconected(analyzer):
     return model.top5Interconected(analyzer)
+
+# ==============================
+# Requerimiento 2
+# ==============================
+
+def clusterCalculation(analyzer,IATA1,IATA2):
+    return model.clusterCalculation(analyzer,IATA1,IATA2)
+
+# ==============================
+# Requerimiento 3
+# ==============================
+
+def encounterMinimumRoute(analyzer,city_departure,city_destiny):
+    return model.encounterMinimumRoute(analyzer,city_departure,city_destiny)
+
+# ==============================
+# Requerimiento 4
+# ==============================
+
+def createMST(analyzer):
+    return model.createMST(analyzer)
+
+# ==============================
+# Requerimiento 5
+# ==============================
+def evaluateClosureEffect(analyzer,IATA):
+    return model.evaluateClosureEffect(analyzer,IATA)
