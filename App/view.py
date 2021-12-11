@@ -72,12 +72,16 @@ def printMenu():
 def optionTwo(cont):
     print("\nCargando información...\n")
     
-    numvertex, numedges, numvertex_directed, numedges_directed, citycount, airports, cities = controller.loadInternationalRoutes(cont, IRfile_routes, IRfile_airports, IRfile_worldcities)
+    numvertex, numedges, numvertex_directed, numedges_directed, numvertex_free, numedges_free,numvertex_directed_free, numedges_directed_free, citycount, airports, cities = controller.loadInternationalRoutes(cont, IRfile_routes, IRfile_airports, IRfile_worldcities)
     print('-'*80)
     print('Número de aeropuertos - nodos - (dígrafo): ' + str(numvertex))
     print('Número de rutas aéreas - arcos - (dígrafo): ' + str(numedges))
     print('\nNúmero de aeropuertos - nodos - (grafo-no-dirigido): ' + str(numvertex_directed))
     print('Número de rutas aéreas - arcos - (grafo-no-dirigido): ' + str(numedges_directed))
+    print('\nNúmero de aeropuertos - nodos - (dígrafo con aerolíneas): ' + str(numvertex_free))
+    print('Número de rutas aéreas - arcos - (dígrafo con aerolíneas): ' + str(numedges_free))
+    print('\nNúmero de aeropuertos - nodos - (grafo-no-dirigido con aerolíneas): ' + str(numvertex_directed_free))
+    print('Número de rutas aéreas - arcos - (grafo-no-dirigido con aerolíneas): ' + str(numedges_directed_free))
     print('\nNúmero de ciudades: ' + str(citycount))
     imprimir= PrettyTable()
     imprimir.field_names=['Name', 'City','Country','Latitude','Longitude']
@@ -184,8 +188,17 @@ def optionFive(cont,city_departure,city_destiny):
 
 def optionSeven(cont,IATA):
     print("\nCalculando el efecto del cierre del aeropuerto...\n")
-    
+
     degrees_digraph,degrees_graph,airports_affected= controller.evaluateClosureEffect(cont,IATA)
+    known_airports = []
+    i = 1
+    while i < lt.size(airports_affected):
+        airport = lt.getElement(airports_affected,i)
+        if airport not in known_airports:
+            known_airports.append(airport)
+        else:
+            lt.deleteElement(airports_affected,i)
+        i += 1
     print('-'*80)
     print('Hay un total de', degrees_digraph,'de rutas afectadas (dígrafo).')
     print('Hay un total de', degrees_graph,'de rutas afectadas (grafo-no-dirigido).\n')
@@ -193,7 +206,8 @@ def optionSeven(cont,IATA):
     print('-'*80)
     print("\n")
     airports = cont['airports']
-    print('Información de los aeropuertos.')
+    print('Información de los aeropuertos afectados.')
+
     if lt.size(airports_affected) > 6:
         imprimir= PrettyTable()
         imprimir.field_names=['Name', 'City','Country','Latitude','Longitude']

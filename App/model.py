@@ -127,16 +127,20 @@ def loadInternationalRoutes(analyzer, input_file_routes, input_file_airports, in
         addAirport(analyzer,airportinfo['IATA'])
         addGeoData(analyzer,airportinfo)
         lt.addLast(airports,airportinfo)
-
+    
+    airlines = []
     for route in input_file_routes:
-        addAirportRoute(analyzer,route)
+        airlines = addAirportRoute(analyzer,route,airlines)
     
     cities = lt.newList()
     for cityinfo in input_file_cities:
         addCityInfo(analyzer,cityinfo)
         lt.addLast(cities, cityinfo)
     
-    return totalAirports(analyzer), totalConnections(analyzer), totalAirportsDirected(analyzer), totalConnectionsDirected(analyzer), lt.size(cities), airports, cities
+    return totalAirports(analyzer), totalConnections(analyzer), totalAirportsDirected(analyzer), totalConnectionsDirected(analyzer), \
+        totalAirportsGen(analyzer['connections_free']),totalConnectionsGen(analyzer['connections_free']),\
+        totalAirportsGen(analyzer['airports_directed_free']),totalConnectionsGen(analyzer['airports_directed_free']),\
+        lt.size(cities), airports, cities
 
 def addAirportInfo(analyzer, airportinfo):
     """
@@ -181,12 +185,12 @@ def addAirport(analyzer, IATA):
         gr.insertVertex(analyzer['connections'], IATA)
         gr.insertVertex(analyzer['connections_free'], IATA)
         gr.insertVertex(analyzer['airports_directed'], IATA)
+        gr.insertVertex(analyzer['airports_directed_free'], IATA)
     except Exception as exp:
         error.reraise(exp, 'model:addAirport')
 
-def addAirportRoute(analyzer, route):
+def addAirportRoute(analyzer, route, airlines):
     try:
-        airlines = []
         departure = route['Departure']
         destination = route['Destination']
         distance = float(route['distance_km'])
@@ -194,7 +198,7 @@ def addAirportRoute(analyzer, route):
         addRouteFree(analyzer, departure, destination, distance)
         addAirportDirectedRoute(analyzer, departure, destination, distance)
         addAirportDirectedRouteFree(analyzer, departure, destination, distance, airlines, route['Airline'])
-        return analyzer
+        return airlines
     except Exception as exp:
         error.reraise(exp, 'model:addAirportRoute')
 
@@ -220,12 +224,11 @@ def addAirportDirectedRouteFree(analyzer, IATA1, IATA2, distance, airlines, airl
     try:
         edge1 = gr.getEdge(analyzer['connections'], IATA1, IATA2)
         edge2 = gr.getEdge(analyzer['connections'], IATA2, IATA1)
-        edge = gr.getEdge(analyzer['airports_directed'], IATA1, IATA2)
         if (edge1 is not None) and (edge2 is not None) and (airline not in airlines):
-            gr.addEdge(analyzer['airports_directed'], IATA1, IATA2, distance)
+            gr.addEdge(analyzer['airports_directed_free'], IATA1, IATA2, distance)
             airlines.append(airline)
     except Exception as exp:
-        error.reraise(exp, 'model:addAirportDirectedRoute')
+        error.reraise(exp, 'model:addAirportDirectedRouteFree')
 
 def addRoute(analyzer, departure, destination, distance):
     """
@@ -291,6 +294,19 @@ def totalConnectionsDirected(analyzer):
     Retorna el total arcos del grafo-no-dirigido
     """
     return gr.numEdges(analyzer['airports_directed'])
+
+def totalAirportsGen(graph):
+    """
+    Retorna el total de vertices del grafo-no-dirigido
+    """
+    return gr.numVertices(graph)
+
+
+def totalConnectionsGen(graph):
+    """
+    Retorna el total arcos del grafo-no-dirigido
+    """
+    return gr.numEdges(graph)
 
 # ==============================
 # Requerimiento 1
@@ -406,8 +422,8 @@ def encounterCloseAirport(latitude_index,Latitude,Longitude):
 # Requerimiento 4
 # ==============================
 def createMST(analyzer):
-    search = pm.PrimMST(analyzer['airports_directed'])
-    prim = pm.prim(analyzer['airports_directed'],search,'LIS')
+    analyzer['search'] = pm.PrimMST(analyzer['airports_directed'])
+    analyzer['prim'] = pm.prim(analyzer['airports_directed'],analyzer['search'],'LIS')
 
 
 # ==============================
@@ -416,8 +432,8 @@ def createMST(analyzer):
 def evaluateClosureEffect(analyzer,IATA):
     digraph = analyzer['connections_free']
     graph = analyzer['airports_directed_free']
-    degrees_digraph = gr.degree(digraph,IATA)
-    degrees_graph = gr.degree(graph,IATA)
+    degrees_digraph = gr.indegree(digraph,IATA) + gr.outdegree(digraph,IATA)
+    degrees_graph = gr.indegree(graph,IATA) + gr.outdegree(graph,IATA)
     airports_affected = gr.adjacents(digraph,IATA)
     return degrees_digraph,degrees_graph,airports_affected
 
