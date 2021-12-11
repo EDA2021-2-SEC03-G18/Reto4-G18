@@ -120,8 +120,11 @@ def clusterCalculation(analyzer,IATA1,IATA2):
 # Requerimiento 3
 # ==============================
 
-def encounterMinimumRoute(analyzer,city_departure,city_destiny):
-    return model.encounterMinimumRoute(analyzer,city_departure,city_destiny)
+def requirement_three(analyzer, city_departure, city_destiny):
+    return model.requirement_three(analyzer, city_departure, city_destiny)
+
+def getCoordinates(analyzer, in_put_departure, in_put_destiny, cities_departure, cities_destiny):
+    return model.getCoordinates(analyzer, in_put_departure, in_put_destiny, cities_departure, cities_destiny)
 
 # ==============================
 # Requerimiento 4

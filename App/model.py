@@ -40,7 +40,7 @@ from DISClib.Algorithms.Graphs import dijsktra as djk
 from DISClib.Algorithms.Graphs import prim as pm
 from DISClib.Utils import error as error
 assert config
-
+from haversine import haversine, Unit
 """
 Se define la estructura de un catálogo de videos. El catálogo tendrá dos listas, una para los videos, otra para las categorias de
 los mismos.
@@ -365,58 +365,94 @@ def clusterCalculation(analyzer,IATA1,IATA2):
 # ==============================
 # Requerimiento 3
 # ==============================
-def encounterMinimumRoute(analyzer,city_departure,city_destiny):
-    geo_index = analyzer['geo_index']
-    departure = encounterCloseAirport(geo_index,round(float(city_departure['lat']),2),round(float(city_departure['lng']),2))
-    destiny = encounterCloseAirport(geo_index,round(float(city_destiny['lat']),2),round(float(city_destiny['lng']),2))
-    analyzer['paths'] = djk.Dijkstra(analyzer['connections'], departure['IATA'])
-    path = djk.pathTo(analyzer['paths'], destiny)
-    return (departure,destiny,path)
 
-def haversine(lon1, lat1, lon2, lat2):
+#############################################################
+def requirement_three(analyzer, city_departure, city_destiny):
+    try:
+        getCitiesByCity_1=getCitiesByCity1(analyzer, city_departure)
+        getCitiesByCity_2=getCitiesByCity2(analyzer, city_destiny)
+        return (getCitiesByCity_1, getCitiesByCity_2)
+    except Exception as exp:
+        error.reraise(exp, 'model:requirement_three')
+#############################################################
+def getCitiesByCity1(analyzer, city):
+    try:
+        existence = m.contains(analyzer['cities'], city)
+        if existence:
+            cities = m.get(analyzer['cities'], city)["value"]
+            return cities
+        return None
+    except Exception as exp:
+        error.reraise(exp, 'model:getCitiesByCity1')
+#############################################################
+def getCitiesByCity2(analyzer, city):
+    try:
+        existence = m.contains(analyzer['cities'], city)
+        if existence:
+            cities = m.get(analyzer['cities'], city)["value"]
+            return cities
+        return None
+    except Exception as exp:
+        error.reraise(exp, 'model:getCitiesByCity2')
+#############################################################
+def getCoordinates(analyzer, in_put_departure, in_put_destiny, cities_departure, cities_destiny):
+    try:
+        choice_1= int(in_put_departure)
+        count1= 1
+        for element in lt.iterator(cities_departure):
+         
+            if count1==choice_1:
+                city_departureinfo=float(element["lat"]),float(element["lng"])
+                break
+            count1 += 1
+        choice_2= int(in_put_destiny)
+        count2=1
+        for element in lt.iterator(cities_destiny):
+            if count2==choice_2:
+                city_destinyinfo=float(element["lat"]),float(element["lng"])
+                break
+            count2 += 1
+         
+        H1= haversine_r3(analyzer, city_departureinfo)
+        H2= haversine_r3(analyzer, city_destinyinfo)
+        I_need_all= route_short(analyzer, H1[0], H2[0])
+        return (I_need_all, H1, H2)
+        
+    except Exception as exp:
+        error.reraise(exp, 'model:getCoordinates')
+#############################################################
+def haversine_r3(analyzer, city_departureinfo):
     """
-    Calculate the great circle distance in kilometers between two points 
-    on the earth (specified in decimal degrees)
-    """
-    # convert decimal degrees to radians 
-    lon1, lat1, lon2, lat2 = map(math.radians, [lon1, lat1, lon2, lat2])
-
-    # haversine formula 
-    dlon = lon2 - lon1 
-    dlat = lat2 - lat1 
-    a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
-    c = 2 * math.asin(math.sqrt(a)) 
-    r = 6371 # Radius of earth in kilometers. Use 3956 for miles. Determines return value units.
-    return c * r
-
-#Gobierno Vasco -> 111.1 km = 1°
-def encounterCloseAirport(latitude_index,Latitude,Longitude):
-    encountered = False
-    range = 10
-    closest_airport = None
-    minimum_distance = None
-    while not encountered:
-        latitude_enc = om.keys(latitude_index,Latitude-range/2,Latitude+range/2)
-        if latitude_enc is not None:
-            for latitude in lt.iterator(latitude_enc):
-                longitude_index = om.get(latitude_index,latitude)['value']
-                longitude_enc = om.keys(longitude_index,Longitude-range/2,Longitude+range/2)
-                if longitude_enc is not None:
-                    for longitude in lt.iterator(longitude_enc):
-                        airport_list = om.get(longitude_index,longitude)['value']
-                        for airportinfo in lt.iterator(airport_list):
-                            distance = haversine(round(float(airportinfo['Longitude']),2),round(float(airportinfo['Latitude']),2),
-                            Longitude,Latitude)
-                            if minimum_distance is None:
-                                minimum_distance = distance
-                                closest_airport = airportinfo
-                            elif minimum_distance > distance:
-                                minimum_distance = distance
-                                closest_airport = airportinfo
-            if closest_airport is None:
-                encountered = True
-        else:
-            range += 10
+        Calculate the great circle distance in kilometers between two points 
+        on the earth (specified in decimal degrees)
+        """
+    try:
+        min= 99**(19)
+        info= ""
+        cities= analyzer['airports']
+        valueSet_cities= m.valueSet(cities)
+        for element in lt.iterator(valueSet_cities):
+            latitude_longitude=float(element["Latitude"]), float(element["Longitude"])
+            Haversine= haversine(city_departureinfo, latitude_longitude, unit=Unit.KILOMETERS)
+            if Haversine<min:
+                min=Haversine
+                info= element
+        return info, min
+    except Exception as exp:
+        error.reraise(exp, "model:haversine_r3")
+#############################################################
+def route_short(analyzer, H1, H2):
+    try:
+        digraph= analyzer["connections"]
+        airport_H1= H1["IATA"]
+        airport_H2= H2["IATA"]
+        route_s= djk.Dijkstra(digraph, airport_H1)
+        distance_airports=djk.distTo(route_s, airport_H2)
+        if djk.hasPathTo(route_s, airport_H2):
+            I_need_all= djk.pathTo(route_s, airport_H2)
+            return  I_need_all, distance_airports
+    except Exception as exp:
+        error.reraise(exp, "model:route_short")
 
 # ==============================
 # Requerimiento 4

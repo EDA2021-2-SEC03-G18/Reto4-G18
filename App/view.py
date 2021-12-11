@@ -31,7 +31,7 @@ from DISClib.ADT import map as m
 from DISClib.ADT import orderedmap as om
 assert cf 
 from prettytable import PrettyTable
-
+from DISClib.Algorithms.Graphs import dijsktra as djk
 """
 La vista se encarga de la interacción con el usuario
 Presenta el menu de opciones y por cada seleccion
@@ -141,50 +141,36 @@ def optionFour(cont,IATA1,IATA2):
         Ans = 'No'
     print('R/'+Ans)
 
-def optionFive(cont,city_departure,city_destiny):
-    print("\nCalculando clúesteres en la red de transporte aéreo...\n")
-    
-    cities = cont['cities']
-    cities_departure = m.get(cities,city_departure)['value']
-    op = 1
-    if lt.size(cities_departure) > 1:
-        imprimir= PrettyTable()
-        imprimir.field_names=['Opción','City','Country','Population''Population', 'Latitude','Longitude']
-        i = 1
-        for data in lt.iterator(cities_departure):
-            imprimir.add_row([i,data['city_ascii'],data['country'],data['population'],round(float(data['lat']),2),round(float(data['lng']),2)])
-            i += 1
-        print(imprimir)
-        op = int(input('Seleccione la ciudad de interés (opciones en tabla, en columna "Opción"): '))
-    city_departure = lt.getElement(cities_departure,op)
-    print('\n')
-    cities_destiny = m.get(cities,city_destiny)['value']
-    op = 1
-    if lt.size(cities_destiny) > 1:
-        imprimir= PrettyTable()
-        imprimir.field_names=['Opción','City','Country','Population''Population', 'Latitude','Longitude']
-        i = 1
-        for data in lt.iterator(cities_destiny):
-            imprimir.add_row([i,data['city_ascii'],data['country'],data['population'],round(float(data['lat']),2),round(float(data['lng']),2)])
-            i += 1
-        print(imprimir)
-        op = int(input('Seleccione la ciudad de interés (opciones en tabla, en columna "Opción"): '))
-    city_destiny = lt.getElement(cities_destiny,op)
 
-    departure, destiny, path = controller.encounterMinimumRoute(cont,city_departure,city_destiny)
-    
-    print('Información de los aeropuertos de destino y llegada.')
+def optionFive(coordinates):
+    print('-'*80)
+    print("Ciudad de partida: "+ (coordinates[1][0])["City"])
+    print("Ciudad de destino: "+(coordinates[2][0])["City"])
+    print('-'*80)
+    print("El aeropuerto de patidad en "+(coordinates[1][0])["City"]+ " es...")
     imprimir= PrettyTable()
-    imprimir.field_names=['Name', 'City','Country','Latitude','Longitude']
-    airportlist = [departure,destiny]
-    for data in airportlist:
-        imprimir.add_row([data['Name'],data['City'],data['Country'],round(float(data['Latitude']),2),round(float(data['Longitude']),2)])
+    imprimir.field_names=['IATA', 'Name','City','Country']
+    imprimir.add_row(coordinates[1][0]['IATA'],coordinates[1][0]['Name'],coordinates[1][0]['City'],coordinates[1][0]['Country'])
     print(imprimir)
+    print("\n")
+    print("El aeropuerto de llegada en "+(coordinates[2][0])["City"]+ " es...")
+    imprimir= PrettyTable()
+    imprimir.field_names=['IATA', 'Name','City','Country']
+    imprimir.add_row((coordinates[2][0])['IATA'],(coordinates[2][0])['Name'],(coordinates[2][0])['City'],(coordinates[2][0])['Country'])
+    print(imprimir)
+    print("\n")
+    print("="*80)
+    total_distance= float(coordinates[1][1]) + float(coordinates[2][1])
+    print(coordinates[1][1], coordinates[2][1])
+    si_ze= stack.size(coordinates[0])
+    n=1
+    while n <= si_ze:
+        stack.pop(coordinates[0])
+        n +=1
+    djk.distTo(coordinates[0], coordinates[2][0]["IATA"])
 
-    if path is None:
-        print('\nNo hay una ruta existente entre los aeropuertos más cercanos a la ciudad de destino y llegada.')
-    else:
-        print(path)
+
+
 
 def optionSeven(cont,IATA):
     print("\nCalculando el efecto del cierre del aeropuerto...\n")
@@ -254,11 +240,21 @@ def thread_cycle():
             IATA2 = input('Ingrese el código IATA del segundo aeropuerto: ')
             optionFour(cont,IATA1,IATA2)
             input('Presione "Enter" para continuar.\n')
+
+
         elif int(inputs[0]) == 5:
-            city_departure = input('Ingrese la ciudad de destino: ')
-            city_destiny = input('Ingrese la ciudad de llegada: ')
-            optionFive(cont,city_departure,city_destiny)
+            city_departure = "Saint Petersburg"#input('Ingrese la ciudad de partida : ')
+            city_destiny = "Lisbon"#input('Ingrese la ciudad de destino : ')
+            CitiesByCity= controller.requirement_three(cont, city_departure, city_destiny)
+            print(CitiesByCity[0])
+            print(CitiesByCity[0])
+            in_put_departure= input("Ingrese su elección (un entero) para la ciudad de partida: ")
+            in_put_destiny= input("Ingrese su elección (un entero) para la ciudad de destino: ")
+            coordinates=controller.getCoordinates(cont, in_put_departure, in_put_destiny, CitiesByCity[0], CitiesByCity[1])
+            optionFive(coordinates)
             input('Presione "Enter" para continuar.\n')
+
+
         elif int(inputs[0]) == 6:
             controller.createMST(cont)
             print(cont['search']['edgeTo'])
