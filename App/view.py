@@ -45,8 +45,8 @@ operación solicitada
 # ___________________________________________________
 
 
-IRfile_airports = 'airports-utf8-50pct.csv'
-IRfile_routes= "routes-utf8-50pct.csv"
+IRfile_airports = 'airports-utf8-80pct.csv'
+IRfile_routes= "routes-utf8-80pct.csv"
 IRfile_worldcities= "worldcities-utf8.csv"
 initialStation = None
 
