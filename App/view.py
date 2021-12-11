@@ -176,44 +176,22 @@ def optionSeven(cont,IATA):
     print("\nCalculando el efecto del cierre del aeropuerto...\n")
 
     degrees_digraph,degrees_graph,airports_affected= controller.evaluateClosureEffect(cont,IATA)
-    known_airports = []
-    i = 1
-    while i < lt.size(airports_affected):
-        airport = lt.getElement(airports_affected,i)
-        if airport not in known_airports:
-            known_airports.append(airport)
-        else:
-            lt.deleteElement(airports_affected,i)
-        i += 1
     print('-'*80)
     print('Hay un total de', degrees_digraph,'de rutas afectadas (dígrafo).')
     print('Hay un total de', degrees_graph,'de rutas afectadas (grafo-no-dirigido).\n')
     print('Hay un total de', lt.size(airports_affected), 'de aeropuertos afectados.')
     print('-'*80)
     print("\n")
-    airports = cont['airports']
     print('Información de los aeropuertos afectados.')
 
-    if lt.size(airports_affected) > 6:
+    if lt.size(airports_affected) > 0:
         imprimir= PrettyTable()
-        imprimir.field_names=['Name', 'City','Country','Latitude','Longitude']
-        first_elements = lt.subList(airports_affected,1,3)
-        for airport in lt.iterator(first_elements):
-            data = m.get(airports,airport)['value']
-            imprimir.add_row([data['Name'],data['City'],data['Country'],round(float(data['Latitude']),2),round(float(data['Longitude']),2)])
-        
-        last_elements = lt.subList(airports_affected,lt.size(airports_affected)-2,3)
-        for airport in lt.iterator(last_elements):
-            data = m.get(airports,airport)['value']
-            imprimir.add_row([data['Name'],data['City'],data['Country'],round(float(data['Latitude']),2),round(float(data['Longitude']),2)])
+        imprimir.field_names=['Name', 'IATA','City','Country','Latitude','Longitude']
+        for data in lt.iterator(airports_affected):
+            imprimir.add_row([data['Name'],data['IATA'],data['City'],data['Country'],round(float(data['Latitude']),2),round(float(data['Longitude']),2)])
         print(imprimir)
-    elif lt.size(airports_affected) > 0:
-        imprimir= PrettyTable()
-        imprimir.field_names=['Name', 'City','Country','Latitude','Longitude']
-        for airport in lt.iterator(airports_affected):
-            data = m.get(airports,airport)['value']
-            imprimir.add_row([data['Name'],data['City'],data['Country'],round(float(data['Latitude']),2),round(float(data['Longitude']),2)])
-        print(imprimir)
+    else:
+        print('\nNo se encontraron aeropuertos afectados.')
 
 
 """

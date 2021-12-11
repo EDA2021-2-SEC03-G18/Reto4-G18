@@ -40,7 +40,7 @@ from DISClib.Algorithms.Graphs import dijsktra as djk
 from DISClib.Algorithms.Graphs import prim as pm
 from DISClib.Utils import error as error
 assert config
-from haversine import haversine, Unit
+
 """
 Se define la estructura de un catálogo de videos. El catálogo tendrá dos listas, una para los videos, otra para las categorias de
 los mismos.
@@ -74,6 +74,10 @@ def newAnalyzer():
                     }
 
         analyzer['airports'] = m.newMap(numelements=93000,
+                                     maptype='PROBING',
+                                     comparefunction=compareAirports)
+        
+        analyzer['airports_affected'] = m.newMap(numelements=93000,
                                      maptype='PROBING',
                                      comparefunction=compareAirports)
         
@@ -125,12 +129,16 @@ def loadInternationalRoutes(analyzer, input_file_routes, input_file_airports, in
     for airportinfo in input_file_airports:
         addAirportInfo(analyzer,airportinfo)
         addAirport(analyzer,airportinfo['IATA'])
+        addAirportAffected(analyzer,airportinfo['IATA'])
         addGeoData(analyzer,airportinfo)
         lt.addLast(airports,airportinfo)
     
     airlines = []
+    routes = []
     for route in input_file_routes:
+        addAirportAffectedValue(analyzer,route,routes)
         airlines = addAirportRoute(analyzer,route,airlines)
+        routes.append(route['Departure']+'-'+route['Destination'])
     
     cities = lt.newList()
     for cityinfo in input_file_cities:
@@ -465,13 +473,71 @@ def createMST(analyzer):
 # ==============================
 # Requerimiento 5
 # ==============================
+def addAirportAffected(analyzer, IATA):
+    """
+    Adiciona aeropuertos afectados a la estructura de almacenamiento para estos
+    """
+    try:
+        airports = analyzer['airports_affected']
+        IATAcode = IATA
+        m.put(airports,IATAcode,{'Digraph':0,'Graph':0})
+    except Exception as exp:
+        error.reraise(exp, 'model:addAirportInfo')
+
+def addAirportAffectedValue(analyzer, routeinfo,routes):
+    """
+    Adiciona información de los aeropuertos afectados
+    """
+    try:
+        airports = analyzer['airports_affected']
+        IATAcode1 = routeinfo['Departure']
+        IATAcode2 = routeinfo['Destination']
+        values1 = m.get(airports,IATAcode1)['value']
+        values1['Digraph'] += 1
+        if (routeinfo['Destination']+'-'+routeinfo['Departure'] in routes) and (routeinfo['Departure']+'-'+routeinfo['Destination'] not in routes):
+            values1['Graph'] += 1
+
+        values2 = m.get(airports,IATAcode2)['value']
+        values2['Digraph'] += 1
+        if (routeinfo['Destination']+'-'+routeinfo['Departure'] in routes) and (routeinfo['Departure']+'-'+routeinfo['Destination'] not in routes):
+            values2['Graph'] += 1
+    except Exception as exp:
+        error.reraise(exp, 'model:addAirportInfo')
 def evaluateClosureEffect(analyzer,IATA):
     digraph = analyzer['connections_free']
-    graph = analyzer['airports_directed_free']
-    degrees_digraph = gr.indegree(digraph,IATA) + gr.outdegree(digraph,IATA)
-    degrees_graph = gr.indegree(graph,IATA) + gr.outdegree(graph,IATA)
+    airports = analyzer['airports']
+    airports_affected = analyzer['airports_affected']
+    degrees_digraph = m.get(airports_affected,IATA)['value']['Digraph']
+    degrees_graph = m.get(airports_affected,IATA)['value']['Graph']
     airports_affected = gr.adjacents(digraph,IATA)
-    return degrees_digraph,degrees_graph,airports_affected
+    if lt.size(airports_affected) > 0:
+        known_airports = []
+        airports_map = om.newMap(omaptype='RBT',comparefunction=compareIATA)
+        for airport in lt.iterator(airports_affected):
+            if airport not in known_airports:
+                known_airports.append(airport)
+                om.put(airports_map,airport,m.get(airports,airport)['value'])
+        
+        ans_airports_affected = lt.newList()
+        if om.size(airports_map) > 6:
+            lowest_IATA = om.minKey(airports_map)
+            highest_IATA = om.maxKey(airports_map)
+            lt.addLast(ans_airports_affected,om.get(airports_affected,lowest_IATA)['value'])
+            lt.addLast(ans_airports_affected,om.get(airports_affected,highest_IATA)['value'])
+            t = 1
+            for i in range(2):
+                om.deleteMin(airports_map)
+                om.deleteMax(airports_map)
+                lowest_IATA = om.minKey(airports_map)
+                highest_IATA = om.maxKey(airports_map)
+                lt.insertElement(ans_airports_affected,om.get(airports_map,lowest_IATA)['value'],i)
+                lt.addLast(ans_airports_affected,om.get(airports_map,highest_IATA)['value'],lt.size(ans_airports_affected)-t)
+                t += 1
+        else:
+            for key in lt.iterator(om.keySet(airports_map)):
+                lt.addLast(ans_airports_affected,om.get(airports_map,key)['value'])
+
+    return degrees_digraph,degrees_graph,ans_airports_affected
 
 
 # ==============================
@@ -518,6 +584,17 @@ def compareCoord(coord1, coord2):
     if (coord1 == coord2):
         return 0
     elif (coord1 > coord2):
+        return 1
+    else:
+        return -1
+
+def compareIATA(IATA1, IATA2):
+    """
+    Compara dos coordenadas
+    """
+    if (IATA1 == IATA2):
+        return 0
+    elif (IATA1 > IATA2):
         return 1
     else:
         return -1
