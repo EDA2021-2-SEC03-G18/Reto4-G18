@@ -25,6 +25,7 @@
  """
 
 
+
 import config as cf
 from DISClib.DataStructures import mapentry as me
 from DISClib.Algorithms.Sorting import shellsort as sa
@@ -40,6 +41,7 @@ from DISClib.Algorithms.Graphs import dijsktra as djk
 from DISClib.Algorithms.Graphs import prim as pm
 from DISClib.Utils import error as error
 assert config
+from haversine import haversine, Unit 
 
 """
 Se define la estructura de un catálogo de videos. El catálogo tendrá dos listas, una para los videos, otra para las categorias de
@@ -538,6 +540,24 @@ def evaluateClosureEffect(analyzer,IATA):
                 lt.addLast(ans_airports_affected,om.get(airports_map,key)['value'])
 
     return degrees_digraph,degrees_graph,ans_airports_affected
+
+
+
+
+# ==============================
+# Requerimiento 7
+# ==============================
+
+
+#REQUERIMIENTO 1 MAPA 
+#--------------------------------
+def get_lat_lng(data,analyzer):
+    IATA= data["IATA"]
+    info=m.get(analyzer["airports"],IATA)['value']
+    LAT= info["Latitude"]
+    LNG= info["Longitude"]
+    return LAT, LNG
+
 
 
 # ==============================

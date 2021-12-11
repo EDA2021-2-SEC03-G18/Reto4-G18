@@ -138,3 +138,10 @@ def createMST(analyzer):
 # ==============================
 def evaluateClosureEffect(analyzer,IATA):
     return model.evaluateClosureEffect(analyzer,IATA)
+
+# ==============================
+# Requerimiento 7
+# ==============================
+
+def get_lat_lng(data,cont):
+    return model.get_lat_lng(data,cont) 

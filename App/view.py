@@ -1,4 +1,4 @@
-﻿#%%
+﻿
 """
  * Copyright 2020, Departamento de sistemas y Computación, Universidad
  * de Los Andes
@@ -32,6 +32,7 @@ from DISClib.ADT import orderedmap as om
 assert cf 
 from prettytable import PrettyTable
 from DISClib.Algorithms.Graphs import dijsktra as djk
+
 """
 La vista se encarga de la interacción con el usuario
 Presenta el menu de opciones y por cada seleccion
@@ -44,8 +45,8 @@ operación solicitada
 # ___________________________________________________
 
 
-IRfile_airports = 'airports-utf8-small.csv'
-IRfile_routes= "routes-utf8-small.csv"
+IRfile_airports = 'airports-utf8-50pct.csv'
+IRfile_routes= "routes-utf8-50pct.csv"
 IRfile_worldcities= "worldcities-utf8.csv"
 initialStation = None
 
@@ -114,6 +115,9 @@ def optionThree(cont):
     imprimir.field_names=['Name','City','Country','IATA','Connections', 'Inbound','Outbound']
     for data in lt.iterator(top5):
         imprimir.add_row([data['Name'],data['City'],data['Country'],data['IATA'],data['inbound']+data['outbound'],data['inbound'],data['outbound']])
+        Location=controller.get_lat_lng(data,cont)    
+        #Mapa=Folium.Map(location=[Location[0], Location[1]], tiles='Stamen Toner', zoom_start=16)
+        #print(Mapa)
     print(imprimir)
     print("\n")
 
