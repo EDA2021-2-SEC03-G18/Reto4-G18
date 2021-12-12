@@ -326,8 +326,11 @@ def totalConnectionsGen(graph):
 # ==============================
 # Requerimiento 1
 # ==============================
-def top5Interconected(analyzer):
-    digraph = analyzer['connections_free']
+def top5Interconected(analyzer,airlines):
+    if airlines:
+        digraph = analyzer['connections_free']
+    else:
+        digraph = analyzer['connections']
     airport_map = analyzer['airports']
     airports = gr.vertices(digraph)
     airports_connections = om.newMap(omaptype='RBT',comparefunction= compareconnections)
@@ -475,10 +478,10 @@ def route_short(analyzer, H1, H2):
 def calculateMST(analyzer,departure,travel_miles):
     MST_structure = pm.PrimMST(analyzer['airports_directed'])['edgeTo']
     longest_distance = 0
-    total_distance = 0
     total_MST_cost = 0
     list_flight = lt.newList()
     map_info = m.newMap()
+    known_sites = m.newMap()
     
     ordered_values = s.newStack()
     
@@ -519,22 +522,28 @@ def calculateMST(analyzer,departure,travel_miles):
                 IATAinfo2 = lt.getElement(IATAinfo['sites'],IATAinfo['pos'])
                 IATAcode2 = IATAinfo2['site']
                 distance = IATAinfo2['dist']
-                longest_distance += distance
-                total_distance += distance
-                IATAinfo['pos'] += 1
-                lt.addLast(list_flight,{'site1':IATAcode1,'site2':IATAcode2,'dist':distance})
-                order += 1
-                s.push(ordered_values,IATAcode2)
-                IATAcode1 = IATAcode2
+                if ((m.get(known_sites,IATAcode1 +'-'+ IATAcode2) is not None) or (m.get(known_sites,IATAcode2 +'-'+ IATAcode1) is not None)) and (IATAinfo['pos'] <= lt.size(IATAinfo['sites'])):
+                    IATAinfo['pos'] += 1
+                elif IATAinfo['pos'] <= lt.size(IATAinfo['sites']):
+                    longest_distance += distance
+                    IATAinfo['pos'] += 1
+                    if m.get(known_sites,IATAcode1 +'-'+ IATAcode2) is None and m.get(known_sites,IATAcode2 +'-'+ IATAcode1) is None:
+                        lt.addLast(list_flight,{'site1':IATAcode1,'site2':IATAcode2,'dist':distance})
+                        order += 1
+                    m.put(known_sites,IATAcode1+'-'+IATAcode2,order)
+                    s.push(ordered_values,IATAcode2)
+                    IATAcode1 = IATAcode2
+                else:
+                    s.pop(ordered_values)
+                    IATAcode1 = s.top(ordered_values)
             else:
                 s.pop(ordered_values)
                 IATAcode1 = s.top(ordered_values)
-                total_distance += distance
             IATAinfo = m.get(map_info,IATAcode1)['value']
         else:
             arrived = True
     
-    return longest_distance,total_MST_cost,(total_distance-travel_miles*1.6)/1.6,list_flight
+    return longest_distance,total_MST_cost,(longest_distance*2-travel_miles*1.6)/1.6,list_flight
 
 
 # ==============================

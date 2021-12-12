@@ -105,10 +105,14 @@ def optionTwo(cont):
     print('El limite de recursión actual: ' + str(sys.getrecursionlimit()))
     print('-'*80)
 
-def optionThree(cont):
+def optionThree(cont,airlines):
     print("\nCalculando aeropuertos interconectados...\n")
+    if int(airlines) == 1:
+        airlines = True
+    else:
+        airlines = False
 
-    airport_network, top5 = controller.top5Interconected(cont)
+    airport_network, top5 = controller.top5Interconected(cont,airlines)
     print('-'*80)
     print('Hay un total de', airport_network,'aeropuertos interconectados.')
     print('-'*80)
@@ -169,31 +173,36 @@ def optionFive(coordinates):
     print(imprimir)
     print("\n")
     print("="*80)
-    total_distance= float(coordinates[1][1]) + float(coordinates[2][1]) + float(coordinates[0][1])
-    print("\n")
-    print("La distancia total : "+ str(total_distance)+" Km.")
-    imprimir= PrettyTable()
-    imprimir.field_names=['Departure', 'Destination','distance_km']
-    si_ze_1= stack.size(coordinates[0][0])
-    n=1
-    while n <= si_ze_1:
-        element= stack.pop(coordinates[0][0])
-        imprimir.add_row([element["vertexA"],element["vertexB"],element["weight"]])
-        n +=1
-    print(imprimir)
+    if coordinates[0] is not None:
+        total_distance= float(coordinates[1][1]) + float(coordinates[2][1]) + float(coordinates[0][1])
+        print("\n")
+        print("La distancia total : "+ str(total_distance)+" Km.")
+        imprimir= PrettyTable()
+        imprimir.field_names=['Departure', 'Destination','distance_km']
+        si_ze_1= stack.size(coordinates[0][0])
+        n=1
+        while n <= si_ze_1:
+            element= stack.pop(coordinates[0][0])
+            imprimir.add_row([element["vertexA"],element["vertexB"],element["weight"]])
+            n +=1
+        print(imprimir)
+    else:
+        print('Por el momento no hay rutas conocidas entre los aeropuertos de partida y llegada encontrados.')
 
 def optionSix(cont,departure,travel_miles):
     print("\nCalculando el uso de las millas de viajero...\n")
-    print("\nCalculando el efecto del cierre del aeropuerto...\n")
 
     longest_distance,total_MST_cost,missing_miles,list_flight = controller.calculateMST(cont,departure,travel_miles)
     print('-'*80)
     print('Distancia total recorrida entre todos los aeropuertos del MST:', round(total_MST_cost,2),'(km)')
-    print('Distancia en ruta más larga posible: ',round(longest_distance,2),'(km)\n')
+    print('Distancia en ruta más larga posible: ',round(longest_distance,2),'(km)')
     print('-'*80)
     print("\n")
     print('Información de la ruta más larga posible.')
-    print('Número de millas restantes para completar el viaje', round(missing_miles,2))
+    if missing_miles > 0:
+        print('Número de millas faltantes para completar el viaje', round(missing_miles,2))
+    else:
+        print('Número de millas restantes al completar el viaje', round(missing_miles,2))
 
     if lt.size(list_flight) <= 15:
         imprimir= PrettyTable()
@@ -286,7 +295,9 @@ def thread_cycle():
             input('Presione "Enter" para continuar.\n')
         
         elif int(inputs[0]) == 3:
-            optionThree(cont)
+            print('Desea tener en cuenta las aerolíneas?\n1) Sí\n2) No')
+            airlines = input('')
+            optionThree(cont,airlines)
             input('Presione "Enter" para continuar.\n')
 
         elif int(inputs[0]) == 4:

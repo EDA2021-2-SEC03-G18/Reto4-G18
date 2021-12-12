@@ -107,8 +107,8 @@ def totalCities(analyzer):
 # Requerimiento 1
 # ==============================
 
-def top5Interconected(analyzer):
-    return model.top5Interconected(analyzer)
+def top5Interconected(analyzer,airlines):
+    return model.top5Interconected(analyzer,airlines)
 
 # ==============================
 # Requerimiento 2
