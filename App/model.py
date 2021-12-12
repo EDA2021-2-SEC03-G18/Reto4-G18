@@ -26,6 +26,7 @@
 
 
 
+from branca.element import Element
 import config as cf
 from DISClib.DataStructures import mapentry as me
 from DISClib.Algorithms.Sorting import shellsort as sa
@@ -42,6 +43,9 @@ from DISClib.Algorithms.Graphs import prim as pm
 from DISClib.Utils import error as error
 assert config
 from haversine import haversine, Unit 
+import folium
+import json 
+
 
 """
 Se define la estructura de un catálogo de videos. El catálogo tendrá dos listas, una para los videos, otra para las categorias de
@@ -541,6 +545,117 @@ def evaluateClosureEffect(analyzer,IATA):
 
     return degrees_digraph,degrees_graph,ans_airports_affected
 
+
+
+# ==============================
+# Requerimiento 6
+# ==============================
+
+#############################################################
+def requirement_six(analyzer, city_departure, city_destiny):
+    try:
+        getCitiesByCity_1=getCitiesByCity1_r6(analyzer, city_departure)
+        getCitiesByCity_2=getCitiesByCity2_r6(analyzer, city_destiny)
+        return (getCitiesByCity_1, getCitiesByCity_2)
+    except Exception as exp:
+        error.reraise(exp, 'model:requirement_three')
+#############################################################
+def getCitiesByCity1_r6(analyzer, city):
+    try:
+        existence = m.contains(analyzer['cities'], city)
+        if existence:
+            cities = m.get(analyzer['cities'], city)["value"]
+            return cities
+        return None
+    except Exception as exp:
+        error.reraise(exp, 'model:getCitiesByCity1')
+#############################################################
+def getCitiesByCity2_r6(analyzer, city):
+    try:
+        existence = m.contains(analyzer['cities'], city)
+        if existence:
+            cities = m.get(analyzer['cities'], city)["value"]
+            return cities
+        return None
+    except Exception as exp:
+        error.reraise(exp, 'model:getCitiesByCity2_r6')
+#############################################################
+def getCoordinates_r6(analyzer, in_put_departure, in_put_destiny, cities_departure, cities_destiny):
+    try:
+        choice_1= int(in_put_departure)
+        count1= 1
+        for element in lt.iterator(cities_departure):
+         
+            if count1==choice_1:
+                city_departureinfo=float(element["lat"]),float(element["lng"])
+                break
+            count1 += 1
+        choice_2= int(in_put_destiny)
+        count2=1
+        for element in lt.iterator(cities_destiny):
+            if count2==choice_2:
+                city_destinyinfo=float(element["lat"]),float(element["lng"])
+                break
+            count2 += 1
+         
+        H1= haversine_r6(city_departureinfo)
+        H2= haversine_r6(city_destinyinfo)
+        I_need_all= route_short_r6(analyzer, H1[0], H2[0])
+        return (I_need_all, H1, H2)
+        
+    except Exception as exp:
+        error.reraise(exp, 'model:getCoordinates_r6')
+#############################################################
+def haversine_r6(city_departureinfo):
+    """
+        Calculate the great circle distance in kilometers between two points 
+        on the earth (specified in decimal degrees)
+        """
+    try:
+        min= 99**(19)
+        info= ""
+        with open("Data/AirportNearestRelevant_v1_Version_1.0_swagger_specification.json") as contenido:
+            c= json.load(contenido)
+            d= (c)["responses"]
+            e= d["nearest-relevant-airports"]
+            f= e["schema"]
+            g= f["example"]
+            h= g["data"]
+            for element in h: #Pasa o abre las carpetas de 0-09
+                geocode=element["geoCode"]
+                analytics= element["analytics"]
+                flights= analytics["flights"]
+                address= element["address"]
+                
+                latitude= geocode["latitude"]
+                longitude= geocode["longitude"]
+                score= flights["score"]
+                IATA= element["iataCode"]
+                name= element["name"]
+                cityName= address["cityName"]
+                countryName= address["countryName"]
+
+                latitude_longitude=float(latitude), float(longitude)
+                Haversine= haversine(city_departureinfo, latitude_longitude, unit=Unit.KILOMETERS)
+                if Haversine<min:
+                    min=Haversine  #menor distancia
+                    info= (IATA, name, score, cityName, countryName)  #información
+            return info, min
+    except Exception as exp:
+        error.reraise(exp, "model:haversine_r6")
+#############################################################
+def route_short_r6(analyzer, H1, H2):
+    try:
+        digraph= analyzer["connections"]
+        airport_H1= str(H1[0])
+        airport_H2= str(H2[0])
+        route_s= djk.Dijkstra(digraph, airport_H1)
+        distance_airports=djk.distTo(route_s, airport_H2)
+        if djk.hasPathTo(route_s, airport_H2):
+            I_need_all= djk.pathTo(route_s, airport_H2)
+            return  I_need_all, distance_airports
+    except Exception as exp:
+        error.reraise(exp, "model:route_short_r6")
 
 
 

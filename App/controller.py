@@ -25,6 +25,7 @@ import model
 import csv
 
 
+
 """
 El controlador se encarga de mediar entre la vista y el modelo.
 """
@@ -62,7 +63,7 @@ def loadInternationalRoutes(analyzer, IRfile_routes, IRfile_airports, IRfile_cit
                                 delimiter=",")
     
     answer = model.loadInternationalRoutes(analyzer,input_file_routes,input_file_airports,input_file_cities)
-    
+
     return answer
 
 # ___________________________________________________
@@ -136,8 +137,18 @@ def createMST(analyzer):
 # ==============================
 # Requerimiento 5
 # ==============================
+
 def evaluateClosureEffect(analyzer,IATA):
     return model.evaluateClosureEffect(analyzer,IATA)
+
+# ==============================
+# Requerimiento 6
+# ==============================
+def requirement_six(analyzer, city_departure, city_destiny):
+    return model.requirement_six(analyzer, city_departure, city_destiny)
+
+def getCoordinates_r6(analyzer, in_put_departure, in_put_destiny, cities_departure, cities_destiny):
+    return model.getCoordinates_r6(analyzer, in_put_departure, in_put_destiny, cities_departure, cities_destiny)
 
 # ==============================
 # Requerimiento 7

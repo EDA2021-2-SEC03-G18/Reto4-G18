@@ -32,6 +32,9 @@ from DISClib.ADT import orderedmap as om
 assert cf 
 from prettytable import PrettyTable
 from DISClib.Algorithms.Graphs import dijsktra as djk
+import folium
+import json
+
 
 """
 La vista se encarga de la interacción con el usuario
@@ -45,10 +48,10 @@ operación solicitada
 # ___________________________________________________
 
 
-IRfile_airports = 'airports-utf8-80pct.csv'
-IRfile_routes= "routes-utf8-80pct.csv"
+IRfile_airports = 'airports-utf8-small.csv'
+IRfile_routes= "routes-utf8-small.csv"
 IRfile_worldcities= "worldcities-utf8.csv"
-initialStation = None
+
 
 # ___________________________________________________
 #  Menu principal
@@ -65,6 +68,7 @@ def printMenu():
     print("5- Encontrar la ruta más corta entre ciudades")
     print("6- Utilizar las millas de viajero")
     print("7- Cuantificar el efecto de un aeropuerto cerrado")
+    print("8- Encontrar la ruta más corta entre ciudades teniendo en cuenta el servicio WEB externo")
     print("0- Salir")
     print("*******************************************")
 
@@ -116,8 +120,8 @@ def optionThree(cont):
     for data in lt.iterator(top5):
         imprimir.add_row([data['Name'],data['City'],data['Country'],data['IATA'],data['inbound']+data['outbound'],data['inbound'],data['outbound']])
         Location=controller.get_lat_lng(data,cont)    
-        #Mapa=Folium.Map(location=[Location[0], Location[1]], tiles='Stamen Toner', zoom_start=16)
-        #print(Mapa)
+        Mapa=folium.Map(location=[Location[0], Location[1]], tiles='Stamen Toner', zoom_start=16)
+        Mapa.save("index.html")
     print(imprimir)
     print("\n")
 
@@ -152,7 +156,7 @@ def optionFive(coordinates):
     print("Ciudad de destino: "+coordinates[2][0]["City"])
     print('-'*80)
 
-    print("El aeropuerto de patidad en "+(coordinates[1][0])["City"]+ " es...")
+    print("El aeropuerto de partidad en "+(coordinates[1][0])["City"]+ " es...")
     imprimir= PrettyTable()
     imprimir.field_names=['IATA', 'Name','City','Country']
     imprimir.add_row([coordinates[1][0]['IATA'],coordinates[1][0]['Name'],coordinates[1][0]['City'],coordinates[1][0]['Country']])
@@ -178,7 +182,6 @@ def optionFive(coordinates):
         n +=1
     print(imprimir)
 
-    
 
 
 
@@ -204,6 +207,41 @@ def optionSeven(cont,IATA):
         print('\nNo se encontraron aeropuertos afectados.')
 
 
+
+def optionEight(coordinates, city_departure, city_destiny):
+    print('-'*80)
+    print("Ciudad de partida: "+ city_departure)
+    print("Ciudad de destino: "+city_destiny)
+    print('-'*80)
+    print("El aeropuerto de partidad será en "+coordinates[1][3])
+    imprimir= PrettyTable()
+    imprimir.field_names=['IATA', 'Name', "Score (flights)", 'City','Country']
+    imprimir.add_row([coordinates[1][0],coordinates[1][1],coordinates[1][2],coordinates[1][3], coordinates[1][4]])
+    print(imprimir)
+    print("\n")
+    print("El aeropuerto de llegada será en "+(coordinates[2][0])["City"])
+    imprimir= PrettyTable()
+    imprimir.field_names=['IATA', 'Name', "Score (flights)", 'City','Country']
+    imprimir.add_row([coordinates[2][0],coordinates[2][1],coordinates[2][2],coordinates[2][3],coordinates[2][4]])
+    print(imprimir)
+    print("\n")
+    print("="*80)
+    total_distance= float(coordinates[1][1]) + float(coordinates[2][1]) + float(coordinates[0][1])
+    print("\n")
+    print("La distancia total : "+ str(total_distance)+" Km.")
+    imprimir= PrettyTable()
+    imprimir.field_names=['Departure', 'Destination','distance_km']
+    si_ze_1= stack.size(coordinates[0][0])
+    n=1
+    while n <= si_ze_1:
+        element= stack.pop(coordinates[0][0])
+        imprimir.add_row([element["vertexA"],element["vertexB"],element["weight"]])
+        n +=1
+    print(imprimir)
+
+cont= None
+
+
 """
 Menú principal
 """
@@ -223,12 +261,12 @@ def thread_cycle():
         elif int(inputs[0]) == 3:
             optionThree(cont)
             input('Presione "Enter" para continuar.\n')
+
         elif int(inputs[0]) == 4:
             IATA1 = input('Ingrese el código IATA del primer aeropuerto: ')
             IATA2 = input('Ingrese el código IATA del segundo aeropuerto: ')
             optionFour(cont,IATA1,IATA2)
             input('Presione "Enter" para continuar.\n')
-
 
         elif int(inputs[0]) == 5:
             print("-"*80)
@@ -268,9 +306,42 @@ def thread_cycle():
             print(cont['search']['edgeTo'])
             print(cont['prim'])
             input('Presione "Enter" para continuar.\n')
+
         elif int(inputs[0]) == 7:
             IATAcode = input('Ingrese el código IATA del aeropuerto a eliminar: ')
             optionSeven(cont,IATAcode)
+            input('Presione "Enter" para continuar.\n')
+        
+        elif int(inputs[0]) == 8:
+            print("-"*80)
+            city_departure = input('Ingrese la ciudad de partida (Por ejemplo, "Saint Petersburg"): ')
+            city_destiny = input('Ingrese la ciudad de destino (Por ejemplo, "Lisbon"): ')
+            print("-"*80)
+            print("\n")
+            CitiesByCity= controller.requirement_six(cont, city_departure, city_destiny)
+            print("Decida en qué país se encuentra la ciudad "+ city_departure+ " e ingrese un número entero en el orden en que se muestra las opciones en la tabla.")
+            imprimir= PrettyTable()
+            imprimir.field_names=["No.",'city', 'country','lat','lng', "capital", "population"]
+            n=1
+            for element in lt.iterator(CitiesByCity[0]):
+                imprimir.add_row([(n),element['city'],element['country'],element['lat'],element['lng'], element['capital'],element['population']])
+                n +=1
+            print(imprimir)
+            print("\n")
+            in_put_departure= input("Ingrese su elección (un entero) para la ciudad de partida: ")
+            print("-"*80)
+            print("Decida en qué país se encuentra la ciudad "+city_destiny+ " e ingrese un número entero en el orden en que se muestra las opciones en la tabla.")
+            imprimir= PrettyTable()
+            imprimir.field_names=["No.",'city', 'country','lat','lng', "capital", "population"]
+            h=1
+            for element in lt.iterator(CitiesByCity[1]):
+                imprimir.add_row([(h),element['city'],element['country'],element['lat'],element['lng'], element['capital'],element['population']])
+                h += 1
+            print(imprimir)
+            print("\n")
+            in_put_destiny= input("Ingrese su elección (un entero) para la ciudad de destino: ")
+            coordinates=controller.getCoordinates_r6(cont, in_put_departure, in_put_destiny, CitiesByCity[0], CitiesByCity[1])
+            optionEight(coordinates, city_departure, city_destiny)
             input('Presione "Enter" para continuar.\n')
         else:
             sys.exit(0)
