@@ -598,8 +598,8 @@ def evaluateClosureEffect(analyzer,IATA):
         if om.size(airports_map) > 6:
             lowest_IATA = om.minKey(airports_map)
             highest_IATA = om.maxKey(airports_map)
-            lt.addLast(ans_airports_affected,om.get(airports_affected,lowest_IATA)['value'])
-            lt.addLast(ans_airports_affected,om.get(airports_affected,highest_IATA)['value'])
+            lt.addLast(ans_airports_affected,om.get(airports_map,lowest_IATA)['value'])
+            lt.addLast(ans_airports_affected,om.get(airports_map,highest_IATA)['value'])
             t = 1
             for i in range(2):
                 om.deleteMin(airports_map)
@@ -613,7 +613,9 @@ def evaluateClosureEffect(analyzer,IATA):
             for key in lt.iterator(om.keySet(airports_map)):
                 lt.addLast(ans_airports_affected,om.get(airports_map,key)['value'])
 
-    return degrees_digraph,degrees_graph,ans_airports_affected
+        return degrees_digraph,degrees_graph,ans_airports_affected
+    else:
+        return None
 
 
 
