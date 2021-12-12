@@ -131,8 +131,8 @@ def getCoordinates(analyzer, in_put_departure, in_put_destiny, cities_departure,
 # Requerimiento 4
 # ==============================
 
-def createMST(analyzer):
-    return model.createMST(analyzer)
+def calculateMST(analyzer,departure,travel_miles):
+    return model.calculateMST(analyzer,departure,travel_miles)
 
 # ==============================
 # Requerimiento 5

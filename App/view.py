@@ -182,7 +182,33 @@ def optionFive(coordinates):
         n +=1
     print(imprimir)
 
+def optionSix(cont,departure,travel_miles):
+    print("\nCalculando el uso de las millas de viajero...\n")
+    print("\nCalculando el efecto del cierre del aeropuerto...\n")
 
+    longest_distance,total_MST_cost,missing_miles,list_flight = controller.calculateMST(cont,departure,travel_miles)
+    print('-'*80)
+    print('Distancia total recorrida entre todos los aeropuertos del MST:', round(total_MST_cost,2),'(km)')
+    print('Distancia en ruta más larga posible: ',round(longest_distance,2),'(km)\n')
+    print('-'*80)
+    print("\n")
+    print('Información de la ruta más larga posible.')
+    print('Número de millas restantes para completar el viaje', round(missing_miles,2))
+
+    if lt.size(list_flight) <= 15:
+        imprimir= PrettyTable()
+        imprimir.field_names=['IATA1', 'IATA2','Distance (km)']
+        for data in lt.iterator(list_flight):
+            imprimir.add_row([data['site1'],data['site2'],round(data['dist'],2)])
+        print(imprimir)
+    else:
+        print('\nA continuación se presenta la información para los 15 primeros vuelos...')
+        lt.subList(list_flight,1,15)
+        imprimir= PrettyTable()
+        imprimir.field_names=['IATA1', 'IATA2','Distance (km)']
+        for data in lt.iterator(list_flight):
+            imprimir.add_row([data['site1'],data['site2'],round(data['dist'],2)])
+        print(imprimir)
 
 
 def optionSeven(cont,IATA):
@@ -303,10 +329,11 @@ def thread_cycle():
 
 
         elif int(inputs[0]) == 6:
-            controller.createMST(cont)
-            print(cont['search']['edgeTo'])
-            print(cont['prim'])
+            departure = input('Digite el aeropuerto desde el cual empezaría el viaje: ')
+            travel_miles = float(input('Digite la cantidad de millas de viajero: '))
+            optionSix(cont,departure,travel_miles)
             input('Presione "Enter" para continuar.\n')
+
 
         elif int(inputs[0]) == 7:
             IATAcode = input('Ingrese el código IATA del aeropuerto a eliminar: ')

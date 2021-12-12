@@ -37,6 +37,7 @@ from DISClib.ADT.graph import gr
 from DISClib.ADT import map as m
 from DISClib.ADT import orderedmap as om
 from DISClib.ADT import list as lt
+from DISClib.ADT import stack as s
 from DISClib.Algorithms.Graphs import scc
 from DISClib.Algorithms.Graphs import dijsktra as djk
 from DISClib.Algorithms.Graphs import prim as pm
@@ -471,9 +472,69 @@ def route_short(analyzer, H1, H2):
 # ==============================
 # Requerimiento 4
 # ==============================
-def createMST(analyzer):
-    analyzer['search'] = pm.PrimMST(analyzer['airports_directed'])
-    analyzer['prim'] = pm.prim(analyzer['airports_directed'],analyzer['search'],'LIS')
+def calculateMST(analyzer,departure,travel_miles):
+    MST_structure = pm.PrimMST(analyzer['airports_directed'])['edgeTo']
+    longest_distance = 0
+    total_distance = 0
+    total_MST_cost = 0
+    list_flight = lt.newList()
+    map_info = m.newMap()
+    
+    ordered_values = s.newStack()
+    
+    #DataStructureConstructed
+    for key in lt.iterator(m.keySet(MST_structure)):
+        flight_info = m.get(MST_structure,key)['value']
+        IATAcode1 = flight_info['vertexA']
+        IATAcode2 = flight_info['vertexB']
+        distance = flight_info['weight']
+        total_MST_cost += distance
+        if m.get(map_info,IATAcode1) is None:
+            sites = lt.newList()
+            lt.addLast(sites,{'site':IATAcode2,'dist':distance})
+            datastructure = {'sites':sites,'pos':1}
+            m.put(map_info,IATAcode1,datastructure)
+        else:
+            IATAinfo = m.get(map_info,IATAcode1)['value']
+            lt.addLast(IATAinfo['sites'],{'site':IATAcode2,'dist':distance})
+        
+        if m.get(map_info,IATAcode2) is None:
+            sites = lt.newList()
+            lt.addLast(sites,{'site':IATAcode1,'dist':distance})
+            datastructure = {'sites':sites,'pos':1}
+            m.put(map_info,IATAcode2,datastructure)
+        else:
+            IATAinfo = m.get(map_info,IATAcode2)['value']
+            lt.addLast(IATAinfo['sites'],{'site':IATAcode1,'dist':distance})
+    
+    #Longest branch and total cost in km
+    s.push(ordered_values,departure)
+    IATAinfo = m.get(map_info,departure)['value']
+    IATAcode1 = departure
+    order = 1
+    arrived = False
+    while not arrived:
+        if s.top(ordered_values) != departure or (order == 1):
+            if IATAinfo['pos'] <= lt.size(IATAinfo['sites']):
+                IATAinfo2 = lt.getElement(IATAinfo['sites'],IATAinfo['pos'])
+                IATAcode2 = IATAinfo2['site']
+                distance = IATAinfo2['dist']
+                longest_distance += distance
+                total_distance += distance
+                IATAinfo['pos'] += 1
+                lt.addLast(list_flight,{'site1':IATAcode1,'site2':IATAcode2,'dist':distance})
+                order += 1
+                s.push(ordered_values,IATAcode2)
+                IATAcode1 = IATAcode2
+            else:
+                s.pop(ordered_values)
+                IATAcode1 = s.top(ordered_values)
+                total_distance += distance
+            IATAinfo = m.get(map_info,IATAcode1)['value']
+        else:
+            arrived = True
+    
+    return longest_distance,total_MST_cost,(total_distance-travel_miles*1.6)/1.6,list_flight
 
 
 # ==============================
