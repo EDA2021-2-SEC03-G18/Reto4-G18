@@ -639,7 +639,7 @@ def haversine_r6(city_departureinfo):
                 Haversine= haversine(city_departureinfo, latitude_longitude, unit=Unit.KILOMETERS)
                 if Haversine<min:
                     min=Haversine  #menor distancia
-                    info= (IATA, name, score, cityName, countryName)  #información
+                    info= (IATA, name, score, cityName, countryName, latitude, longitude)  #información
             return info, min
     except Exception as exp:
         error.reraise(exp, "model:haversine_r6")
@@ -649,11 +649,20 @@ def route_short_r6(analyzer, H1, H2):
         digraph= analyzer["connections"]
         airport_H1= str(H1[0])
         airport_H2= str(H2[0])
-        route_s= djk.Dijkstra(digraph, airport_H1)
-        distance_airports=djk.distTo(route_s, airport_H2)
-        if djk.hasPathTo(route_s, airport_H2):
-            I_need_all= djk.pathTo(route_s, airport_H2)
+        t1= float(H1[5]), float(H1[6])
+        t2= float(H2[5]), float(H2[6])
+
+        if gr.containsVertex(digraph, airport_H1):
+            route_s= djk.Dijkstra(digraph, airport_H1)
+            distance_airports=djk.distTo(route_s, airport_H2)
+            if djk.hasPathTo(route_s, airport_H2):
+                I_need_all= djk.pathTo(route_s, airport_H2)
+                return  I_need_all, distance_airports
+        else:
+            distance_airports=haversine(t1, t2, unit=Unit.KILOMETERS)
+            I_need_all=None
             return  I_need_all, distance_airports
+
     except Exception as exp:
         error.reraise(exp, "model:route_short_r6")
 

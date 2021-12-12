@@ -213,16 +213,16 @@ def optionEight(coordinates, city_departure, city_destiny):
     print("Ciudad de partida: "+ city_departure)
     print("Ciudad de destino: "+city_destiny)
     print('-'*80)
-    print("El aeropuerto de partidad será en "+coordinates[1][3])
+    print("El aeropuerto de partidad será en "+coordinates[1][0][3])
     imprimir= PrettyTable()
     imprimir.field_names=['IATA', 'Name', "Score (flights)", 'City','Country']
-    imprimir.add_row([coordinates[1][0],coordinates[1][1],coordinates[1][2],coordinates[1][3], coordinates[1][4]])
+    imprimir.add_row([coordinates[1][0][0],coordinates[1][0][1],coordinates[1][0][2],coordinates[1][0][3], coordinates[1][0][4]])
     print(imprimir)
     print("\n")
-    print("El aeropuerto de llegada será en "+(coordinates[2][0])["City"])
+    print("El aeropuerto de llegada será en "+(coordinates[2][0][0]))
     imprimir= PrettyTable()
     imprimir.field_names=['IATA', 'Name', "Score (flights)", 'City','Country']
-    imprimir.add_row([coordinates[2][0],coordinates[2][1],coordinates[2][2],coordinates[2][3],coordinates[2][4]])
+    imprimir.add_row([coordinates[2][0][0],coordinates[2][0][1],coordinates[2][0][2],coordinates[2][0][3],coordinates[2][0][4]])
     print(imprimir)
     print("\n")
     print("="*80)
@@ -231,13 +231,14 @@ def optionEight(coordinates, city_departure, city_destiny):
     print("La distancia total : "+ str(total_distance)+" Km.")
     imprimir= PrettyTable()
     imprimir.field_names=['Departure', 'Destination','distance_km']
-    si_ze_1= stack.size(coordinates[0][0])
-    n=1
-    while n <= si_ze_1:
-        element= stack.pop(coordinates[0][0])
-        imprimir.add_row([element["vertexA"],element["vertexB"],element["weight"]])
-        n +=1
-    print(imprimir)
+    if coordinates[0][0] is not None:
+        si_ze_1= stack.size(coordinates[0][0])
+        n=1
+        while n <= si_ze_1:
+            element= stack.pop(coordinates[0][0])
+            imprimir.add_row([element["vertexA"],element["vertexB"],element["weight"]])
+            n +=1
+        print(imprimir)
 
 cont= None
 
